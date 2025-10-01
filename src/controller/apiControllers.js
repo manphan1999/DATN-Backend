@@ -1,0 +1,332 @@
+import DeviceController from '../controller/deviceController'
+import ComController from '../controller/comController'
+import tagNameController from '../controller/tagNameController'
+// controllers/protocolController.js
+import { getAllProtocol } from '../configs/protocol.js';
+
+const handleGetAllProtocol = async (req, res) => {
+    try {
+        let data = getAllProtocol(); // object protocol
+
+        return res.status(200).json({
+            EM: 'Get all protocol successfully',
+            EC: 0,
+            DT: data,
+        });
+
+    } catch (error) {
+        console.error("handleGetAllProtocol error:", error);
+        return res.status(500).json({
+            EM: 'Error from server',
+            EC: -2,
+            DT: '',
+        });
+    }
+};
+
+/* Handle Device */
+const handleGetAllDevice = async (req, res) => {
+    try {
+        let data = await DeviceController.getAllDevice()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleCreateNewDevice = async (req, res) => {
+    try {
+        // console.log('Check body:', req.body)
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Can't have data`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await DeviceController.createDeviceController(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+
+}
+
+const handleUpdateDevice = async (req, res) => {
+    try {
+        // console.log('Check body:', req.body)
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Can't have data`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await DeviceController.updateDevice(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleDeleteDevice = async (req, res) => {
+    try {
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Can't have data`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await DeviceController.deleteDevice(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+/* Handle COM */
+const handleGetAllComs = async (req, res) => {
+    try {
+        let data = await ComController.getAllCom()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleUpdateCom = async (req, res) => {
+    try {
+        // console.log('Check body:', req.body)
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Can't have data`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await ComController.updateCom(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+/* Handle Channels */
+const handleGetAllChannels = async (req, res) => {
+    try {
+        let data = await tagNameController.getAllTagName()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleCreateNewTag = async (req, res) => {
+    try {
+        // console.log('Check body:', req.body)
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Can't have data`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await tagNameController.createTagName(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+
+}
+
+const handleUpdateChannel = async (req, res) => {
+    try {
+        // console.log('Check body:', req.body)
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Can't have data`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await tagNameController.updateTagName(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleDeleteChannel = async (req, res) => {
+    try {
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Can't have data`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await tagNameController.deleteChannel(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleGetDataFormat = async (req, res) => {
+    try {
+        let data = await tagNameController.getDataFormat()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleGetDataType = async (req, res) => {
+    try {
+        let data = await tagNameController.getDataType()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleGetFunctionCodeModbus = async (req, res) => {
+    try {
+        let data = await tagNameController.getFunctionCodeModbus()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Error from server',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+module.exports = {
+    handleGetAllProtocol,
+    handleCreateNewDevice, handleGetAllDevice, handleUpdateDevice, handleDeleteDevice,
+    handleGetAllComs, handleUpdateCom,
+    handleGetAllChannels, handleUpdateChannel, handleDeleteChannel, handleCreateNewTag, handleGetDataFormat, handleGetDataType, handleGetFunctionCodeModbus
+}
