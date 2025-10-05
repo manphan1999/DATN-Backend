@@ -50,8 +50,8 @@ const functionCodeModbus = [
     { _id: 4, name: '04 Read Input Registers (3x)' },
     { _id: 5, name: '05 Write Single Coil' },
     { _id: 6, name: '06 Write Single Register' },
-    { _id: 7, name: '15 Write Multiple Coil' },
-    { _id: 8, name: '16 Write Multiple Register' },
+    // { _id: 7, name: '15 Write Multiple Coil' },
+    // { _id: 8, name: '16 Write Multiple Register' },
 ]
 
 const getDataLenght = (type) => {

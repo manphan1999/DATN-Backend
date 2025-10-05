@@ -76,8 +76,8 @@ class DeviceHandler {
                         break
                 }
             }
-            // console.log("Tất cả COM đã kết nối:", Object.keys(this.connectionComs))
-            // console.log('Check connectionDevices: ', this.connectionDevices)
+            //console.log("Tất cả COM đã kết nối:", Object.keys(this.connectionComs))
+            //console.log('Check connectionDevices: ', this.connectionDevices)
         } catch (error) {
             console.error('Lỗi connectAllDevice:', error.message)
         }

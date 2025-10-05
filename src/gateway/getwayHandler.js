@@ -68,7 +68,7 @@ class GatewayHandler {
     async readData() {
         try {
             setInterval(async () => {
-                // console.log("Check this.devices: ", this.devices)
+                //console.log("Check this.devices: ", this.devices)
                 const result = []
                 const tagnames = await TagnameModel.findAsync().sort({
                     // Fillter tagname in list database
@@ -145,7 +145,7 @@ class GatewayHandler {
                 this.data = result
                 //console.log('Check data tag name: ', this.data)
                 global._io.emit('SERVER SEND HOME DATA', this.data)
-            }, 1000)// Tần số quét dữ liệu
+            }, 5000)// Tần số quét dữ liệu
         } catch (error) {
             // console.log(`gateway > gatewayHandler > readData [error]: ${error}`)
         }
@@ -159,20 +159,21 @@ class GatewayHandler {
             const protocols = getAllProtocol()
             let data
             try {
-                data = await modbusClient[functionCode](
-                    tagname.address,
-                    getDataLenght(tagname.dataFormat) //lấy số byte cần đọc
+                // data = await modbusClient[functionCode](
+                //     tagname.address,
+                //     getDataLenght(tagname.dataFormat) //lấy số byte cần đọc
 
+                // )
+                data = await modbusClient.client[functionCode](
+                    tagname.address,
+                    getDataLenght(tagname.dataFormat)
                 )
                 if (this.reconnectInterval[tagname.device._id]) {
                     clearInterval(this.reconnectInterval[tagname.device._id])
                     this.reconnectInterval[tagname.device._id] = null
                 }
             } catch (error) {
-                // console.log(error)
-                // console.log(
-                //     `gateway > gatewayHandler > handleData [error]: ${error}`
-                // )
+                console.error(`[handleData] Error reading ${tagname.name}:`, error.message);
                 if (
                     !this.reconnectInterval[tagname.device._id] &&
                     modbusClient.info.protocol === protocols.Modbus[1].name
@@ -188,21 +189,25 @@ class GatewayHandler {
             }
 
             // Xử lý kiểu dữ liệu
-            let rawValue, value
+            let rawValue, valueGainOffset, value
             if (functionCode === 'readHoldingRegisters' || functionCode === 'readInputRegisters') {
                 rawValue = swapData(data.buffer, tagname.dataType)
             } else {
                 rawValue = data ? 1 : 0
             }
 
-            rawValue = Math.round((rawValue * 1 + tagname.offset) * 100) / 100
+            valueGainOffset = (rawValue * tagname.gain + tagname.offset)
 
-            value = rawValue
+            value = valueGainOffset
             // Xử lý data qua function
-            // if (tagname.functionText) {
-            //     eval(tagname.functionText)
-            //     value = func(value)
-            // }
+            if (tagname.functionText) {
+                try {
+                    const fn = eval(`(${tagname.functionText})`) // tạo hàm cục bộ
+                    value = fn(value)
+                } catch (err) {
+                    console.error(`Lỗi khi xử lý functionText của tag ${tagname.tagname}:`, err)
+                }
+            }
 
             const status =
                 value < tagname.lowSet || value > tagname.highSet ? 2 : 1 // 1 là bình thường, 2 là vượt ngưỡng
@@ -210,7 +215,7 @@ class GatewayHandler {
                 tagnameId: tagname._id,
                 channel: tagname.channel,
                 slaveId: tagname.slaveId,
-                // address: tagname.address,
+                address: tagname.address,
                 tagname: tagname.name,
                 symbol: tagname.symbol,
                 rawValue,

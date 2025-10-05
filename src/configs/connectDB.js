@@ -1,9 +1,9 @@
 import Datastore from '@seald-io/nedb'
 import fileName from '../configs/fileName'
 import path from 'path';
-console.log("Database path:", `${fileName.DATABASE_FOLDER_PATH_LOCAL}/coms.db`)
+// console.log("Database path:", `${fileName.DATABASE_FOLDER_PATH_LOCAL}/coms.db`)
 // const dbPath = path.join(__dirname, 'database', 'coms.db');
-// console.log("✅ DB Path:", dbPath);
+// console.log(" DB Path:", dbPath);
 
 const DeviceModel = new Datastore({
     filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/devices.db`,

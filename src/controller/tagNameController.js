@@ -20,7 +20,7 @@ const getAllTagName = async () => {
 
 const createTagName = async (rawData) => {
     try {
-        console.log('check new tag: ', rawData);
+        // console.log('check new tag: ', rawData);
         const {
             channel,
             name,
@@ -36,6 +36,7 @@ const createTagName = async (rawData) => {
             address,
             dataFormat,
             dataType,
+            functionText,
             selectFTP,
         } = rawData;
 
@@ -72,6 +73,7 @@ const createTagName = async (rawData) => {
             address: Number(address),
             dataFormat: Number(dataFormat),
             dataType: Number(dataType),
+            functionText,
             selectFTP,
         });
 
@@ -118,6 +120,7 @@ const updateTagName = async (rawData) => {
             address,
             dataFormat,
             dataType,
+            functionText,
             selectFTP,
         } = rawData;
 
@@ -139,6 +142,7 @@ const updateTagName = async (rawData) => {
                     address: Number(address),
                     dataFormat: Number(dataFormat),
                     dataType: Number(dataType),
+                    functionText,
                     selectFTP,
                 }
             },
