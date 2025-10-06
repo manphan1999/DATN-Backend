@@ -1,1 +1,0 @@
-{"channel":1,"name":"Temp","device":{"_id":"71v5bQnbwDg3KQnq","name":"TCP"},"symbol":"Nhiệt độ","unit":"oC","offset":0,"gain":1,"lowSet":0,"highSet":100,"slaveId":1,"functionCode":3,"address":15,"dataFormat":5,"dataType":3,"functionText":"(x) => {\nlet y = Number(parseFloat(x).toFixed(1));\n    return y\n}","selectFTP":false,"_id":"7qPeJJN7iojpeVgK"}

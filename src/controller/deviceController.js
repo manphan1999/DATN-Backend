@@ -1,4 +1,5 @@
 import { DeviceModel, TagnameModel } from '../configs/connectDB'
+import deviceHandler from '../protocol/modbus/devicesHandlers'
 
 const filterValidFields = (data, allowedFields) => {
     const result = {}
@@ -79,31 +80,16 @@ const updateDevice = async (rawData) => {
     try {
         const { id } = rawData;
         if (!id) {
-            return {
-                EM: `Can't find device`,
-                EC: 1,
-                DT: "",
-            };
+            return { EM: `Can't find device`, EC: 1, DT: "" };
         }
 
-        // Lọc trường hợp lệ
+        const oldDevice = await DeviceModel.findOneAsync({ _id: id });
+
         const updateData = filterValidFields(rawData, [
-            "name",
-            "serialPort",
-            "ipAddress",
-            "port",
-            "protocol",
-            "driverName",
-            "timeOut",
+            "name", "serialPort", "ipAddress", "port",
+            "protocol", "driverName", "timeOut",
+            "baudRate", "dataBit", "stopBit", "parity"
         ]);
-
-        if (Object.keys(updateData).length === 0) {
-            return {
-                EM: "No valid fields to update",
-                EC: -1,
-                DT: "",
-            };
-        }
 
         const device = await DeviceModel.updateAsync(
             { _id: id },
@@ -113,20 +99,19 @@ const updateDevice = async (rawData) => {
 
         await DeviceModel.loadDatabaseAsync();
 
+        // Khi có bất kỳ thay đổi cấu hình nào → gọi reconnect
+        await deviceHandler.reconnectDevice(id);
+
         return {
             EM: "Update Device Successfully",
             EC: 0,
             DT: device,
         };
     } catch (error) {
-        return {
-            EM: "Error from server",
-            EC: -2,
-            DT: "",
-        };
+        console.error("updateDevice error:", error);
+        return { EM: "Error from server", EC: -2, DT: "" };
     }
 };
-
 
 const deleteDevice = async (rawData) => {
     try {

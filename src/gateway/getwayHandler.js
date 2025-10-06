@@ -1,10 +1,10 @@
-import DeviceHandler from '../protocol/modbus/devicesHandlers'
+import deviceHandler from '../protocol/modbus/devicesHandlers'
 import { TagnameModel } from '../configs/connectDB'
 import { getAllProtocol } from '../configs/protocol'
 import { swapData, getDataLenght } from '../configs/convertData'
 class GatewayHandler {
     constructor() {
-        this.deviceHandler = new DeviceHandler()
+        this.deviceHandler = deviceHandler
         this.devices
         this.data
         this.reconnectInterval = {}
@@ -190,10 +190,16 @@ class GatewayHandler {
 
             // Xử lý kiểu dữ liệu
             let rawValue, valueGainOffset, value
-            if (functionCode === 'readHoldingRegisters' || functionCode === 'readInputRegisters') {
-                rawValue = swapData(data.buffer, tagname.dataType)
-            } else {
-                rawValue = data ? 1 : 0
+
+            switch (functionCode) {
+                case 'readHoldingRegisters':
+                case 'readInputRegisters':
+                    rawValue = swapData(data.buffer, tagname.dataType);
+                    break;
+                case 'readCoils':
+                case 'readDiscreteInputs':
+                    rawValue = data?.data?.[0] ? 1 : 0;
+                    break;
             }
 
             valueGainOffset = (rawValue * tagname.gain + tagname.offset)
@@ -208,7 +214,7 @@ class GatewayHandler {
                     console.error(`Lỗi khi xử lý functionText của tag ${tagname.tagname}:`, err)
                 }
             }
-
+            console.log('check all: ', data)
             const status =
                 value < tagname.lowSet || value > tagname.highSet ? 2 : 1 // 1 là bình thường, 2 là vượt ngưỡng
             return {

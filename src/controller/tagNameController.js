@@ -1,5 +1,6 @@
 import { TagnameModel } from '../configs/connectDB'
 import { dataFormat, dataType, functionCodeModbus } from '../configs/convertData'
+import { connectAllDevice } from '../protocol/modbus/devicesHandlers'
 
 const getAllTagName = async () => {
     try {

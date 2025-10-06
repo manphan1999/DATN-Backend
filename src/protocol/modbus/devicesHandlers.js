@@ -9,35 +9,41 @@ class DeviceHandler {
         this.reconnectInterval = {}
     }
 
+    // Kết nối tất cả các COM RTU
     async connectCom() {
         try {
             const coms = await ComModel.findAsync()
-            //console.log("Tìm thấy danh sách COM trong DB:", coms)
             for (let com of coms) {
                 const modbus = new ModbusClient(com)
                 this.connectionComs[com.serialPort] = modbus
                 this.connectionComs[com.serialPort].client = await modbus.connectRTU(com)
-                //console.log("Đã kết nối:", com.name)
-                //console.log("Đối tượng client:", this.connectionComs[com.serialPort].client ? "Có client" : "Không có client")
             }
         } catch (error) {
             console.error("Lỗi connectCom:", error.message)
         }
     }
 
+    //  Ngắt tất cả COM
     async disconnectCom() {
         try {
             for (let comId of Object.keys(this.connectionComs)) {
                 this.connectionComs[comId].close()
             }
-        } catch (error) { }
+            this.connectionComs = {}
+        } catch (error) {
+            console.error("disconnectCom:", error.message)
+        }
     }
 
     async connectRtu(deviceId) {
         try {
             const device = await DeviceModel.findOneAsync({ _id: deviceId })
             if (device) {
-                this.connectionDevices[device._id] = this.connectionComs[device.serialPort]
+                const client = this.connectionComs[device.serialPort]
+                if (client) {
+                    this.connectionDevices[device._id] = client
+                    //console.log(`[RTU] Kết nối device ${device.name} qua ${device.serialPort}`)
+                }
             }
         } catch (error) { }
     }
@@ -49,6 +55,7 @@ class DeviceHandler {
                 const modbus = new ModbusClient(device)
                 this.connectionDevices[device._id] = modbus
                 this.connectionDevices[device._id].client = await modbus.connectTCP()
+                console.log(`[TCP] Kết nối device ${device.name} ${device.ipAddress}:${device.port}`)
             }
             clearInterval(this.reconnectInterval[deviceId])
         } catch (error) {
@@ -65,19 +72,26 @@ class DeviceHandler {
             const devices = await DeviceModel.findAsync()
             const protocols = getAllProtocol()
 
-            for (let device of devices) {
-                switch (device.driverName) {
-                    case protocols.Modbus[0].name: // "Modbus RTU Client"
-                        this.connectionDevices[device._id] = this.connectionComs[device.serialPort]
-                        break
+            for (const device of devices) {
+                const current = this.connectionDevices[device._id]
 
-                    case protocols.Modbus[1].name: // "Modbus TCP Client"
+                if (device.driverName === protocols.Modbus[0].name) {
+                    // RTU
+                    await this.connectRtu(device._id)
+                }
+
+                if (device.driverName === protocols.Modbus[1].name) {
+                    // TCP
+                    if (
+                        !current ||
+                        current.ipAddress !== device.ipAddress ||
+                        current.port !== device.port
+                    ) {
+                        await this.disconnectDevice(device._id)
                         await this.connectTcp(device._id)
-                        break
+                    }
                 }
             }
-            //console.log("Tất cả COM đã kết nối:", Object.keys(this.connectionComs))
-            //console.log('Check connectionDevices: ', this.connectionDevices)
         } catch (error) {
             console.error('Lỗi connectAllDevice:', error.message)
         }
@@ -85,41 +99,39 @@ class DeviceHandler {
 
     async disconnectDevice(deviceId) {
         try {
-            const device = await DeviceModel.findOneAsync({ _id: deviceId })
-            const protocols = getAllProtocol()
-
-            if (device.driverName === protocols.Modbus[1].name) {
-                this.connectionDevices[deviceId].close()
+            if (this.connectionDevices[deviceId]) {
+                this.connectionDevices[deviceId].close?.()
+                delete this.connectionDevices[deviceId]
             }
-
-            delete this.connectionDevices[deviceId]
         } catch (error) {
             console.error('Lỗi disconnectDevice:', error.message)
         }
     }
 
+    // Hàm này gọi khi có thay đổi cấu hình Device
+    async reconnectDevice(deviceId) {
+        try {
+            const device = await DeviceModel.findOneAsync({ _id: deviceId })
+            const protocols = getAllProtocol()
+            if (!device) return
+
+            console.log(`[INFO] Cập nhật cấu hình device ${device.name} → reconnect...`)
+
+            // Ngắt kết nối cũ
+            await this.disconnectDevice(deviceId)
+
+            if (device.driverName === protocols.Modbus[0].name) {
+                await this.connectRtu(deviceId)
+            } else if (device.driverName === protocols.Modbus[1].name) {
+                await this.connectTcp(deviceId)
+            }
+        } catch (error) {
+            console.error("reconnectDevice error:", error.message)
+        }
+    }
+
 }
-module.exports = DeviceHandler
 
-// Thông tin thiết bị qua TCP
-// const info = {
-//     ipAddress: '127.0.0.1',
-//     port: 502,
-// }
+module.exports = new DeviceHandler()
 
-// // Tạo client mới
-// const client = new ModbusClient(info)
-
-// const test = async () => {
-//     try {
-//         await client.connectTCP()
-//         const coil = await client.readCoils(0, 1)
-//         console.log('Coil[0] =', coil)
-//         await client.writeCoil(0, true)
-//     } catch (err) {
-//         console.error(err)
-//     } finally {
-//         client.close()
-//     }
-// }
 

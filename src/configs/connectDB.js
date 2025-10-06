@@ -4,6 +4,7 @@ import path from 'path';
 // console.log("Database path:", `${fileName.DATABASE_FOLDER_PATH_LOCAL}/coms.db`)
 // const dbPath = path.join(__dirname, 'database', 'coms.db');
 // console.log(" DB Path:", dbPath);
+// console.log("Database path:", path.join(fileName.DATABASE_FOLDER_PATH_LOCAL, 'coms.db'))
 
 const DeviceModel = new Datastore({
     filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/devices.db`,
