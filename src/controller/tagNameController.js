@@ -38,6 +38,7 @@ const createTagName = async (rawData) => {
             dataFormat,
             dataType,
             functionText,
+            permission,
             selectFTP,
         } = rawData;
 
@@ -75,6 +76,7 @@ const createTagName = async (rawData) => {
             dataFormat: Number(dataFormat),
             dataType: Number(dataType),
             functionText,
+            permission,
             selectFTP,
         });
 
@@ -122,6 +124,7 @@ const updateTagName = async (rawData) => {
             dataFormat,
             dataType,
             functionText,
+            permission,
             selectFTP,
         } = rawData;
 
@@ -144,6 +147,7 @@ const updateTagName = async (rawData) => {
                     dataFormat: Number(dataFormat),
                     dataType: Number(dataType),
                     functionText,
+                    permission,
                     selectFTP,
                 }
             },

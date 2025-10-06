@@ -145,7 +145,7 @@ class GatewayHandler {
                 this.data = result
                 //console.log('Check data tag name: ', this.data)
                 global._io.emit('SERVER SEND HOME DATA', this.data)
-            }, 5000)// Tần số quét dữ liệu
+            }, 1000)// Tần số quét dữ liệu
         } catch (error) {
             // console.log(`gateway > gatewayHandler > readData [error]: ${error}`)
         }
@@ -189,34 +189,32 @@ class GatewayHandler {
             }
 
             // Xử lý kiểu dữ liệu
-            let rawValue, valueGainOffset, value
+            let rawValue = 0, value = 0, status = 3; // khởi tạo mặc định
 
             switch (functionCode) {
                 case 'readHoldingRegisters':
                 case 'readInputRegisters':
                     rawValue = swapData(data.buffer, tagname.dataType);
+                    value = rawValue * tagname.gain + tagname.offset;
+                    if (tagname.functionText) {
+                        try {
+                            const fn = eval(`(${tagname.functionText})`);
+                            value = fn(value);
+                        } catch (err) {
+                            console.error(`Lỗi khi xử lý functionText của tag ${tagname.name}:`, err);
+                        }
+                    }
+                    status = (value < tagname.lowSet || value > tagname.highSet) ? 2 : 1;
                     break;
+
                 case 'readCoils':
                 case 'readDiscreteInputs':
                     rawValue = data?.data?.[0] ? 1 : 0;
+                    value = rawValue;
+                    status = 1;
                     break;
             }
 
-            valueGainOffset = (rawValue * tagname.gain + tagname.offset)
-
-            value = valueGainOffset
-            // Xử lý data qua function
-            if (tagname.functionText) {
-                try {
-                    const fn = eval(`(${tagname.functionText})`) // tạo hàm cục bộ
-                    value = fn(value)
-                } catch (err) {
-                    console.error(`Lỗi khi xử lý functionText của tag ${tagname.tagname}:`, err)
-                }
-            }
-            console.log('check all: ', data)
-            const status =
-                value < tagname.lowSet || value > tagname.highSet ? 2 : 1 // 1 là bình thường, 2 là vượt ngưỡng
             return {
                 tagnameId: tagname._id,
                 channel: tagname.channel,
