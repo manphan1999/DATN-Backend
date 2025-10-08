@@ -50,8 +50,8 @@ const functionCodeModbus = [
     { _id: 4, name: '04 Read Input Registers (3x)' },
     { _id: 5, name: '05 Write Single Coil' },
     { _id: 6, name: '06 Write Single Register' },
-    // { _id: 7, name: '15 Write Multiple Coil' },
-    // { _id: 8, name: '16 Write Multiple Register' },
+    { _id: 15, name: '15 Write Multiple Coil' },
+    { _id: 16, name: '16 Write Multiple Register' },
 ]
 
 const getDataLenght = (type) => {
@@ -180,5 +180,166 @@ const swapData = (dataBuffer, type) => {
     return data;
 };
 
+const writeDataLenght = (value, type) => {
+    let buffer;
 
-module.exports = { dataFormat, dataType, functionCodeModbus, swapData, getDataLenght }
+    switch (type) {
+        // 16-bit
+        case 1: // Int16
+            buffer = Buffer.alloc(2);
+            buffer.writeInt16BE(value);
+            break;
+        case 2: // Uint16
+            buffer = Buffer.alloc(2);
+            buffer.writeUInt16BE(value);
+            break;
+
+        // 32-bit float
+        case 3: // Float32 ABCD
+            buffer = Buffer.alloc(4);
+            buffer.writeFloatBE(value);
+            break;
+        case 4: // Float32 DCBA
+            buffer = Buffer.alloc(4);
+            buffer.writeFloatLE(value);
+            break;
+        case 5: // Float32 BADC
+            buffer = Buffer.alloc(4);
+            buffer.writeFloatBE(value);
+            buffer = Buffer.from([buffer[1], buffer[0], buffer[3], buffer[2]]);
+            break;
+        case 6: // Float32 CDAB
+            buffer = Buffer.alloc(4);
+            buffer.writeFloatBE(value);
+            buffer = Buffer.from([buffer[2], buffer[3], buffer[0], buffer[1]]);
+            break;
+
+        // 32-bit int signed
+        case 7:
+            buffer = Buffer.alloc(4);
+            buffer.writeInt32BE(value);
+            break;
+        case 8:
+            buffer = Buffer.alloc(4);
+            buffer.writeInt32LE(value);
+            break;
+        case 9:
+            buffer = Buffer.alloc(4);
+            buffer.writeInt32BE(value);
+            buffer = Buffer.from([buffer[1], buffer[0], buffer[3], buffer[2]]);
+            break;
+        case 10:
+            buffer = Buffer.alloc(4);
+            buffer.writeInt32BE(value);
+            buffer = Buffer.from([buffer[2], buffer[3], buffer[0], buffer[1]]);
+            break;
+
+        // 32-bit int unsigned
+        case 11:
+            buffer = Buffer.alloc(4);
+            buffer.writeUInt32BE(value);
+            break;
+        case 12:
+            buffer = Buffer.alloc(4);
+            buffer.writeUInt32LE(value);
+            break;
+        case 13:
+            buffer = Buffer.alloc(4);
+            buffer.writeUInt32BE(value);
+            buffer = Buffer.from([buffer[1], buffer[0], buffer[3], buffer[2]]);
+            break;
+        case 14:
+            buffer = Buffer.alloc(4);
+            buffer.writeUInt32BE(value);
+            buffer = Buffer.from([buffer[2], buffer[3], buffer[0], buffer[1]]);
+            break;
+
+        // 64-bit signed
+        case 15:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigInt64BE(BigInt(value));
+            break;
+        case 16:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigInt64LE(BigInt(value));
+            break;
+        case 17:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigInt64BE(BigInt(value));
+            buffer = Buffer.from([
+                buffer[1], buffer[0], buffer[3], buffer[2],
+                buffer[5], buffer[4], buffer[7], buffer[6]
+            ]);
+            break;
+        case 18:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigInt64BE(BigInt(value));
+            buffer = Buffer.from([
+                buffer[2], buffer[3], buffer[0], buffer[1],
+                buffer[6], buffer[7], buffer[4], buffer[5]
+            ]);
+            break;
+
+        // 64-bit unsigned
+        case 19:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigUInt64BE(BigInt(value));
+            break;
+        case 20:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigUInt64LE(BigInt(value));
+            break;
+        case 21:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigUInt64BE(BigInt(value));
+            buffer = Buffer.from([
+                buffer[1], buffer[0], buffer[3], buffer[2],
+                buffer[5], buffer[4], buffer[7], buffer[6]
+            ]);
+            break;
+        case 22:
+            buffer = Buffer.alloc(8);
+            buffer.writeBigUInt64BE(BigInt(value));
+            buffer = Buffer.from([
+                buffer[2], buffer[3], buffer[0], buffer[1],
+                buffer[6], buffer[7], buffer[4], buffer[5]
+            ]);
+            break;
+
+        // 64-bit float (double)
+        case 23:
+            buffer = Buffer.alloc(8);
+            buffer.writeDoubleBE(value);
+            break;
+        case 24:
+            buffer = Buffer.alloc(8);
+            buffer.writeDoubleLE(value);
+            break;
+        case 25:
+            buffer = Buffer.alloc(8);
+            buffer.writeDoubleBE(value);
+            buffer = Buffer.from([
+                buffer[1], buffer[0], buffer[3], buffer[2],
+                buffer[5], buffer[4], buffer[7], buffer[6]
+            ]);
+            break;
+        case 26:
+            buffer = Buffer.alloc(8);
+            buffer.writeDoubleBE(value);
+            buffer = Buffer.from([
+                buffer[2], buffer[3], buffer[0], buffer[1],
+                buffer[6], buffer[7], buffer[4], buffer[5]
+            ]);
+            break;
+
+        default:
+            throw new Error('Không hỗ trợ kiểu dữ liệu này để ghi');
+    }
+
+    return buffer;
+};
+
+module.exports = {
+    dataFormat, dataType, functionCodeModbus, swapData, getDataLenght, writeDataLenght
+
+}
