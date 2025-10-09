@@ -42,7 +42,7 @@ class DeviceHandler {
                 const client = this.connectionComs[device.serialPort]
                 if (client) {
                     this.connectionDevices[device._id] = client
-                    //console.log(`[RTU] Kết nối device ${device.name} qua ${device.serialPort}`)
+                    console.log(`[RTU] Kết nối device ${device.name} qua ${device.serialPort}`)
                 }
             }
         } catch (error) { }

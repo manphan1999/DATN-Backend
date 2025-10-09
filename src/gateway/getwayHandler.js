@@ -184,7 +184,7 @@ class GatewayHandler {
                     this.reconnectInterval[tagname.device._id] = null
                 }
             } catch (error) {
-                console.error(`[handleDataModbus] Error reading ${tagname.name}:`, error.message);
+                //console.error(`[handleDataModbus] Error reading ${tagname.name}:`, error.message);
                 if (
                     !this.reconnectInterval[tagname.device._id] &&
                     modbusClient.info.protocol === protocols.Modbus[1].name
@@ -337,7 +337,7 @@ class GatewayHandler {
                     throw new Error("Function code không hỗ trợ ghi");
             }
 
-            console.log(`Ghi thành công: ${newValue} vào ${address}`);
+            // console.log(`Ghi thành công: ${newValue} vào ${address}`);
 
             // Sau khi ghi xong, đọc lại để cập nhật ngay
             try {

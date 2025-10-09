@@ -1,1 +1,1 @@
-{"name":"HMI","ipAddress":"127.0.0.1","port":502,"protocol":"Modbus","driverName":"Modbus TCP Client","timeOut":1000,"_id":"h4HKMAP24YTJXVd8"}
+{"name":"PLC","serialPort":"COM12","protocol":"Modbus","driverName":"Modbus RTU Client","timeOut":1000,"_id":"BGAZKSZKKVmTpB9g"}
