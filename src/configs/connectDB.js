@@ -37,5 +37,28 @@ const TagnameModel = new Datastore({
             await TagnameModel.loadDatabaseAsync()
         } catch (error) { }
     })()
-export { DeviceModel, ComModel, TagnameModel }
+
+const TagHistorical = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/tagHistorical.db`,
+    autoload: true
+})
+    // load database ngay khi start
+    ; (async () => {
+        try {
+            await TagHistorical.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+
+const ConfigHistorical = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/configHistorical.db`,
+    autoload: true
+})
+    // load database ngay khi start
+    ; (async () => {
+        try {
+            await ConfigHistorical.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+
+export { DeviceModel, ComModel, TagnameModel, TagHistorical, ConfigHistorical }
 

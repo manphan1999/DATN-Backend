@@ -25,6 +25,14 @@ const initApiRoutes = (app) => {
     router.get("/channels/get-channels/data-format", apiController.handleGetDataFormat);
     router.get("/channels/get-channels/data-type", apiController.handleGetDataType);
     router.get("/channels/get-channels/function-code", apiController.handleGetFunctionCodeModbus);
+    /* API Historical */
+    router.get("/historical/get-historical", apiController.handleGetAllHistorical);
+    router.post('/historical/create-historical', apiController.handleCreateTagHistorical);
+    router.delete("/historical/delete-historical", apiController.handleDeleteHistorical);
+    router.get("/historical/get-config", apiController.handleGetAllConfig);
+    router.put("/historical/update-config", apiController.handleUpdateConfig);
+
+
 
     return app.use("/api/v1/", router);
 }

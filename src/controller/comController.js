@@ -5,13 +5,13 @@ const getAllCom = async () => {
         const comList = await ComModel.findAsync({})
         // console.log('check comList: ', comList)
         return {
-            EM: 'List Com',
+            EM: 'Danh sách cổng COM',
             EC: 0,
             DT: comList
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }
@@ -20,11 +20,11 @@ const getAllCom = async () => {
 
 const updateCom = async (rawData) => {
     try {
-        console.log('check rawdata upadate com: ', rawData)
+        //console.log('check rawdata upadate com: ', rawData)
         const { id, baudRate, parity, dataBit, stopBit } = rawData
         if (!id) {
             return {
-                EM: `Can't not device`,
+                EM: `Không có dữ liệu`,
                 EC: 1,
                 DT: ''
             }
@@ -48,13 +48,13 @@ const updateCom = async (rawData) => {
 
         await ComModel.loadDatabaseAsync()
         return {
-            EM: 'Update Com Successfully',
+            EM: 'Cập nhật cấu hình COM thành công',
             EC: 0,
             DT: device
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }

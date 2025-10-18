@@ -155,8 +155,6 @@ class GatewayHandler {
                                 break
                             }
                     }
-
-
                 }
                 this.data = result
                 //console.log('Check data tag name: ', this.data)

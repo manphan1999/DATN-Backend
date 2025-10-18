@@ -1,4 +1,4 @@
-import { TagnameModel } from '../configs/connectDB'
+import { TagnameModel, TagHistorical } from '../configs/connectDB'
 import { dataFormat, dataType, functionCodeModbus } from '../configs/convertData'
 import { connectAllDevice } from '../protocol/modbus/devicesHandlers'
 
@@ -6,13 +6,13 @@ const getAllTagName = async () => {
     try {
         const tagList = await TagnameModel.findAsync({})
         return {
-            EM: 'List Tag',
+            EM: 'Danh sách Tag',
             EC: 0,
             DT: tagList
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }
@@ -21,7 +21,8 @@ const getAllTagName = async () => {
 
 const createTagName = async (rawData) => {
     try {
-        // console.log('check new tag: ', rawData);
+        console.log('check new tag: ', rawData);
+
         const {
             channel,
             name,
@@ -45,64 +46,63 @@ const createTagName = async (rawData) => {
         const checkChannel = await TagnameModel.findOneAsync({ channel: Number(channel) });
         if (checkChannel) {
             return {
-                EM: "Channel already exists",
-                EC: -1,
-                DT: '',
-            };
-        }
-        const checkName = await TagnameModel.findOneAsync({ name });
-        if (checkName) {
-            return {
-                EM: "Tag Name already exists",
+                EM: `Channel đã tồn tại: ${checkChannel.channel}`,
                 EC: -1,
                 DT: '',
             };
         }
 
-        // insert nếu không trùng
+        const checkName = await TagnameModel.findOneAsync({ name });
+        if (checkName) {
+            return {
+                EM: `Tên Tag đã tồn tại: ${checkName.name}`,
+                EC: -1,
+                DT: '',
+            };
+        }
+
         const newTag = await TagnameModel.insertAsync({
             channel: Number(channel),
             name,
             device,
             symbol,
             unit,
-            offset: Number(offset),
-            gain: Number(gain),
-            lowSet: Number(lowSet),
-            highSet: Number(highSet),
-            slaveId: Number(slaveId),
-            functionCode: Number(functionCode),
-            address: Number(address),
-            dataFormat: Number(dataFormat),
-            dataType: Number(dataType),
+            offset: Number(offset) || 0,
+            gain: Number(gain) || 0,
+            lowSet: Number(lowSet) || 0,
+            highSet: Number(highSet) || 0,
+            slaveId: Number(slaveId) || 0,
+            functionCode: Number(functionCode) || 0,
+            address: Number(address) || 0,
+            dataFormat: Number(dataFormat) || 0,
+            dataType: Number(dataType) || 0,
             functionText,
             permission,
             selectFTP,
         });
-
         await TagnameModel.loadDatabaseAsync();
 
         return {
-            EM: "Add Tag Success",
+            EM: "Thêm Tag thành công",
             EC: 0,
             DT: newTag,
         };
     } catch (error) {
-        console.error("createTagName error:", error);
         return {
-            EM: "Error from server",
+            EM: "Lỗi Server!!!",
             EC: -2,
             DT: "",
         };
     }
 };
 
+
 const updateTagName = async (rawData) => {
     try {
         const { id } = rawData;
         if (!id) {
             return {
-                EM: `Can't find device`,
+                EM: `Không tìm thấy Tag`,
                 EC: 1,
                 DT: "",
             };
@@ -157,13 +157,13 @@ const updateTagName = async (rawData) => {
         await TagnameModel.loadDatabaseAsync();
 
         return {
-            EM: "Update Channel Successfully",
+            EM: "Cập nhật Tag thành công",
             EC: 0,
             DT: '',
         };
     } catch (error) {
         return {
-            EM: "Error from server",
+            EM: "Lỗi Server!!!",
             EC: -2,
             DT: "",
         };
@@ -176,7 +176,7 @@ const deleteChannel = async (rawData) => {
         const { ids } = rawData
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return {
-                EM: `No device selected`,
+                EM: `Không có Tag nào được chọn`,
                 EC: 1,
                 DT: ''
             }
@@ -187,17 +187,26 @@ const deleteChannel = async (rawData) => {
             { _id: { $in: ids } },   // tìm tất cả _id nằm trong mảng ids
             { multi: true }          // cho phép xoá nhiều record
         )
+
+        await TagHistorical.removeAsync(
+            { id: { $in: ids } },   // tìm tất cả _id nằm trong mảng ids
+            { multi: true }          // cho phép xoá nhiều record
+        )
+
         await TagnameModel.compactDatafile()
         await TagnameModel.loadDatabaseAsync()
 
+        await TagHistorical.compactDatafile()
+        await TagHistorical.loadDatabaseAsync()
+
         return {
-            EM: 'Delete Tag successfully',
+            EM: 'Xóa Tag thành công',
             EC: 0,
             DT: ''
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }
@@ -208,13 +217,13 @@ const deleteChannel = async (rawData) => {
 const getDataFormat = async () => {
     try {
         return {
-            EM: 'List Data Format',
+            EM: 'Danh sách Format',
             EC: 0,
             DT: dataFormat
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }
@@ -224,13 +233,13 @@ const getDataFormat = async () => {
 const getDataType = async () => {
     try {
         return {
-            EM: 'List Data type',
+            EM: 'Danh sách Data type',
             EC: 0,
             DT: dataType
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }
@@ -240,13 +249,13 @@ const getDataType = async () => {
 const getFunctionCodeModbus = async () => {
     try {
         return {
-            EM: 'List Function Code Modbus',
+            EM: 'Danh sách Function Code Modbus',
             EC: 0,
             DT: functionCodeModbus
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }

@@ -1,4 +1,4 @@
-import { DeviceModel, TagnameModel } from '../configs/connectDB'
+import { DeviceModel, TagnameModel, TagHistorical } from '../configs/connectDB'
 import deviceHandler from '../protocol/modbus/devicesHandlers'
 
 const filterValidFields = (data, allowedFields) => {
@@ -21,13 +21,13 @@ const getAllDevice = async () => {
     try {
         const deviceList = await DeviceModel.findAsync({})
         return {
-            EM: 'List Device',
+            EM: 'Danh sách thiết bị đã kết nối',
             EC: 0,
             DT: deviceList
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }
@@ -36,13 +36,13 @@ const getAllDevice = async () => {
 
 const createDeviceController = async (rawData) => {
     try {
+        console.log('Tạo mới device: ', rawData);
         const { name } = rawData;
-
-        // Check trùng tên
-        const checkName = await DeviceModel.findOneAsync({ name });
-        if (checkName) {
+        // Kiểm tra trùng tên
+        const checkName = await DeviceModel.findAsync({ name });
+        if (checkName && checkName.length > 0) {
             return {
-                EM: "Name Device Axis",
+                EM: `Tên thiết bị đã tồn tại: ${checkName.map(e => e.name).join(', ')}`,
                 EC: -1,
                 DT: "",
             };
@@ -59,17 +59,18 @@ const createDeviceController = async (rawData) => {
             "timeOut",
         ]);
 
+        // Thêm mới vào database
         const newDevice = await DeviceModel.insertAsync(newData);
         await DeviceModel.loadDatabaseAsync();
 
         return {
-            EM: "Add Device Success",
+            EM: "Thêm thiết bị thành công",
             EC: 0,
             DT: newDevice,
         };
     } catch (error) {
         return {
-            EM: "Error from server",
+            EM: "Lỗi Server!!!",
             EC: -2,
             DT: "",
         };
@@ -80,15 +81,14 @@ const updateDevice = async (rawData) => {
     try {
         const { id } = rawData;
         if (!id) {
-            return { EM: `Can't find device`, EC: 1, DT: "" };
+            return { EM: `Không tìm thấy thiết bị`, EC: 1, DT: "" };
         }
 
         const oldDevice = await DeviceModel.findOneAsync({ _id: id });
 
         const updateData = filterValidFields(rawData, [
             "name", "serialPort", "ipAddress", "port",
-            "protocol", "driverName", "timeOut",
-            "baudRate", "dataBit", "stopBit", "parity"
+            "protocol", "driverName", "timeOut"
         ]);
 
         const device = await DeviceModel.updateAsync(
@@ -103,23 +103,22 @@ const updateDevice = async (rawData) => {
         await deviceHandler.reconnectDevice(id);
 
         return {
-            EM: "Update Device Successfully",
+            EM: "Cập nhật thiết bị thành công",
             EC: 0,
             DT: device,
         };
     } catch (error) {
-        console.error("updateDevice error:", error);
-        return { EM: "Error from server", EC: -2, DT: "" };
+        return { EM: "Lỗi Server!!!", EC: -2, DT: "" };
     }
 };
 
 const deleteDevice = async (rawData) => {
     try {
-        console.log('check rawData Delete: ', rawData)
+        //console.log('check rawData Delete: ', rawData)
         const { ids } = rawData
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return {
-                EM: `No device selected`,
+                EM: `Không có thiết bị nào được chọn`,
                 EC: 1,
                 DT: ''
             }
@@ -135,19 +134,25 @@ const deleteDevice = async (rawData) => {
                 return this.device && ids.includes(this.device._id);
             }
         }, { multi: true });
+        await TagHistorical.removeAsync({
+            $where: function () {
+                return this.device && ids.includes(this.device._id);
+            }
+        }, { multi: true });
 
         //  reload
         await DeviceModel.loadDatabaseAsync();
         await TagnameModel.loadDatabaseAsync();
+        await TagHistorical.loadDatabaseAsync();
 
         return {
-            EM: 'Delete devices successfully',
+            EM: 'Xóa thiết bị thành công',
             EC: 0,
             DT: ''
         }
     } catch (error) {
         return {
-            EM: 'Error from server',
+            EM: 'Lỗi Server!!!',
             EC: -2,
             DT: ''
         }
