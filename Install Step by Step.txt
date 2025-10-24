@@ -1,7 +1,7 @@
 npm install --save-exact modbus-serial@8.0.13
 npm install --save-exact socket.io@4.7.2
 npm install --save-exact cors@2.8.5
-
+npm install --save-exact cron@3.0.0
 
 Link post git: https://github.com/manphan1999/DATN-Backend.git
 How to post project on github

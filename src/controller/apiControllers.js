@@ -3,6 +3,7 @@ import ComController from '../controller/comController'
 import tagNameController from '../controller/tagNameController'
 import configHistorical from '../controller/configHistorical.js'
 import TagHistorical from '../controller/tagHistorical.js'
+import HistoricalValue from '../controller/historicalValueController.js'
 import { getAllProtocol } from '../configs/protocol.js';
 
 const handleGetAllProtocol = async (req, res) => {
@@ -497,6 +498,51 @@ const handleDeleteConfig = async (req, res) => {
     //     })
     // }
 }
+/*Historical Value*/
+const handleGetHistoricalValue = async (req, res) => {
+    try {
+        let data = await HistoricalValue.getAllValueHistorical()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Lỗi Server!!!',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
+
+const handleDeleteValueHistorical = async (req, res) => {
+    try {
+        console.log('req.body: ', req.body)
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Không có dữ liệu`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await HistoricalValue.deleteValueHistorical(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Lỗi Server!!!',    // Error message
+            EC: -2,    // Error code
+            DT: ''
+        })
+    }
+}
 
 
 module.exports = {
@@ -504,5 +550,6 @@ module.exports = {
     handleCreateNewDevice, handleGetAllDevice, handleUpdateDevice, handleDeleteDevice,
     handleGetAllComs, handleUpdateCom,
     handleGetAllChannels, handleUpdateChannel, handleDeleteChannel, handleCreateNewTag, handleGetDataFormat, handleGetDataType, handleGetFunctionCodeModbus,
-    handleGetAllHistorical, handleCreateTagHistorical, handleGetAllConfig, handleUpdateConfig, handleDeleteConfig, handleDeleteHistorical
+    handleGetAllHistorical, handleCreateTagHistorical, handleGetAllConfig, handleUpdateConfig, handleDeleteConfig, handleDeleteHistorical,
+    handleGetHistoricalValue, handleDeleteValueHistorical
 }

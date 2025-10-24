@@ -1,11 +1,12 @@
 import GatewayHandler from '../gateway/getwayHandler';
-
+// import { deleteValueHistorical } from '../controller/historicalValueController'
 let gateway;
 
 ; (async () => {
     gateway = new GatewayHandler();
     await gateway.connectAll();
     await gateway.readDataModbus();
+    gateway.saveDataToDb();
 })();
 
 const connect = (socket) => {
@@ -16,17 +17,25 @@ const connect = (socket) => {
     });
 
     socket.on("CLIENT WRITE TAG", async (payload) => {
-        console.log("Nhận yêu cầu ghi:", payload);
         try {
             const result = await gateway.writeDataModbus(payload);
             socket.emit("SERVER WRITE RESULT", result);
         } catch (err) {
-            socket.emit("SERVER WRITE RESULT", {
-                success: false,
-                error: err.message,
-            });
         }
     });
+
+    // socket.on("CREATE TAG HISTORICAL", async () => {
+    //     await gateway.saveDataToDb();
+    // });
+
+    socket.on("CHANGE HISTORICAL TYPE", async () => {
+        await gateway.saveDataToDb();
+    });
+
+    // socket.on("DELETE TAG HISTORICAL", async () => {
+    //     console.log('reload historical')
+    //     await gateway.saveDataToDb();
+    // });
 };
 
 export default connect;

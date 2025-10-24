@@ -31,8 +31,9 @@ const initApiRoutes = (app) => {
     router.delete("/historical/delete-historical", apiController.handleDeleteHistorical);
     router.get("/historical/get-config", apiController.handleGetAllConfig);
     router.put("/historical/update-config", apiController.handleUpdateConfig);
-
-
+    /* API Historical Value */
+    router.get("/historical/get-listdata", apiController.handleGetHistoricalValue);
+    router.delete("/historical/delete-tagvalue", apiController.handleDeleteValueHistorical);
 
     return app.use("/api/v1/", router);
 }

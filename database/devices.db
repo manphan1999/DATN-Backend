@@ -1,1 +1,1 @@
-{"name":"PLC","serialPort":"COM10","protocol":"Modbus","driverName":"Modbus RTU Client","timeOut":1000,"_id":"C4EW9iodTqty16Ss"}
+{"name":"PLC","protocol":"Modbus","driverName":"Modbus TCP Client","timeOut":1000,"_id":"pGJNceb1GGqsfEWc","ipAddress":"127.0.0.1","port":502}

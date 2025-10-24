@@ -1,11 +1,17 @@
-import deviceHandler from '../protocol/modbus/devicesHandlers'
-import { TagnameModel } from '../configs/connectDB'
-import { getAllProtocol } from '../configs/protocol'
-import { swapData, getDataLenght, writeDataLenght, dataType } from '../configs/convertData'
+import fs from 'fs'
+import { CronJob } from 'cron';
+import fileName from '../configs/fileName'
+import deviceHandler from '../protocol/modbus/devicesHandlers';
+import { TagnameModel, HistoricalValueModel } from '../configs/connectDB';
+import TagHistorical from '../controller/tagHistorical';
+import { getAllProtocol } from '../configs/protocol';
+import { swapData, getDataLenght, writeDataLenght, dataType } from '../configs/convertData';
+import configHistorical from '../controller/configHistorical'
+
 class GatewayHandler {
     constructor() {
         this.deviceHandler = deviceHandler
-        this.devices
+        this.devices = {}
         this.data
         this.reconnectInterval = {}
         this.cronJobUploadFtp = {}
@@ -13,6 +19,11 @@ class GatewayHandler {
         this.intervalModbusServer = {}
         this.modbusClient
         this.calibrateStatus = 0
+        this.currentConfig = null
+
+        this.saveDataTimer = null
+        this.saveDataJob = null
+        this.currentHistoricalTagsHash = null
     }
 
     setCalibrate(status) {
@@ -371,6 +382,233 @@ class GatewayHandler {
         }
     }
 
+    async saveDataToDb() {
+        try {
+            // Lấy danh sách thẻ Historical được tạo
+            const listTagHistorical = await TagHistorical.getHistorical();
+            const historicalTags = listTagHistorical?.DT || []; // Lấy mảng tags từ response
+            console.log('check historicalTags: ', historicalTags)
+            // Tạo Set chứa các id cần lưu historical để check nhanh
+            const historicalTagIds = new Set();
+            historicalTags.forEach(tag => {
+                historicalTagIds.add(tag.id); // Sử dụng trường 'id' từ response
+            });
+
+            console.log(`[saveDataToDb] Danh sách tag historical cần lưu:`, Array.from(historicalTagIds));
+
+            // Lấy cấu hình từ configHistorical
+            const dataConfig = await configHistorical.getAllConfig();
+            const list = dataConfig?.DT || [];
+            const cfg = list[0];
+
+            const currentHistoricalTagsHash = JSON.stringify(Array.from(historicalTagIds).sort());
+            const shouldRestart =
+                !this.currentConfig ||
+                this.currentConfig.type !== cfg?.type ||
+                this.currentConfig.cycle !== cfg?.cycle ||
+                this.currentHistoricalTagsHash !== currentHistoricalTagsHash;
+
+            if (!shouldRestart) {
+                console.log(`[saveDataToDb] Config và historical tags không thay đổi, bỏ qua restart`);
+                return;
+            }
+
+            // Lưu hash của historical tags hiện tại để so sánh lần sau
+            this.currentHistoricalTagsHash = currentHistoricalTagsHash;
+
+            console.log(`[saveDataToDb] Có thay đổi - Config từ: ${this.currentConfig?.type}-${this.currentConfig?.cycle} sang: ${cfg?.type}-${cfg?.cycle}, Tags: ${historicalTags.length} tags`);
+
+            this.currentConfig = cfg ? { ...cfg } : null;
+
+            if (!historicalTags || historicalTags.length === 0) {
+                console.log(`[saveDataToDb] Không có tag historical nào, dừng tất cả jobs`);
+
+                // Xóa job cũ nếu đang chạy
+                if (this.saveDataTimer) {
+                    clearInterval(this.saveDataTimer);
+                    this.saveDataTimer = null;
+                    console.log(`[saveDataToDb] Đã dừng Cycle timer`);
+                }
+                if (this.saveDataJob) {
+                    this.saveDataJob.stop();
+                    this.saveDataJob = null;
+                    console.log(`[saveDataToDb] Đã dừng TT10/2021 CronJob`);
+                }
+
+                this.currentConfig = null;
+                this.currentHistoricalTagsHash = null;
+                return;
+            }
+
+            if (!cfg) {
+                console.warn('[saveDataToDb] Không có cấu hình historical nào!');
+                // Xóa job cũ nếu không có config
+                if (this.saveDataTimer) {
+                    clearInterval(this.saveDataTimer);
+                    this.saveDataTimer = null;
+                }
+                if (this.saveDataJob) {
+                    this.saveDataJob.stop();
+                    this.saveDataJob = null;
+                }
+                this.currentHistoricalTagsHash = null;
+                return;
+            }
+
+            const { type, cycle } = cfg;
+
+            // Xóa job cũ nếu đang chạy
+            if (this.saveDataTimer) {
+                clearInterval(this.saveDataTimer);
+                this.saveDataTimer = null;
+                console.log(`[saveDataToDb] Cleared old timer`);
+            }
+            if (this.saveDataJob) {
+                this.saveDataJob.stop();
+                this.saveDataJob = null;
+                console.log(`[saveDataToDb] Stopped old CronJob`);
+            }
+
+            const getData = this.getData.bind(this);
+
+            // -------------------------------
+            // Trường hợp 1: type = "Cycle"
+            // -------------------------------
+            if (type === 'Cycle') {
+                const intervalSec = Number(cycle) || 10;
+                console.log(`[saveDataToDb] Cycle interval = ${intervalSec}s`);
+                this.saveDataTimer = setInterval(async () => {
+                    try {
+                        const datas = getData();
+                        if (!Array.isArray(datas) || datas.length === 0) return;
+
+                        const date = new Date();
+                        const startDate = new Date(date).setHours(0, 0, 0, 0);
+                        const value = {};
+
+                        let savedCount = 0;
+                        for (let data of datas) {
+                            if (historicalTagIds.has(data.tagnameId)) {
+                                value[data.tagnameId] = data;
+                                savedCount++;
+                            }
+                        }
+
+                        if (Object.keys(value).length !== 0) {
+                            await HistoricalValueModel.updateAsync(
+                                { date: startDate },
+                                {
+                                    $push: {
+                                        values: { value, ts: date },
+                                    },
+                                },
+                                { upsert: true }
+                            );
+                        }
+
+                        await HistoricalValueModel.loadDatabaseAsync();
+
+                        setTimeout(() => {
+                            fs.copyFile(
+                                `${fileName.DATABASE_FOLDER_PATH}/historicalvalue.db`,
+                                `${fileName.DATABASE_FOLDER_PATH}/historicalvalue.db.backup`,
+                                (err) => err && console.log(err)
+                            );
+                        }, 20000);
+
+                        console.log(`[saveDataToDb] [CYCLE] Saved ${savedCount}/${datas.length} tags at ${new Date().toLocaleTimeString()}`);
+                    } catch (error) {
+                        console.error('[saveDataToDb] [CYCLE] Error:', error);
+                    }
+                }, intervalSec * 1000);
+
+                console.log(`[saveDataToDb] Started CYCLE timer (every ${intervalSec}s)`);
+            }
+
+            // -------------------------------
+            // Trường hợp 2: type = "TT10/2021"
+            // -------------------------------
+            else if (type === 'TT10/2021') {
+                this.saveDataJob = new CronJob(
+                    '0 */5 * * * *', // Mỗi 5 phút
+                    async () => {
+                        try {
+                            const datas = getData();
+                            if (!Array.isArray(datas) || datas.length === 0) return;
+
+                            const date = new Date();
+                            const startDate = new Date(date).setHours(0, 0, 0, 0);
+                            const value = {};
+
+                            let savedCount = 0;
+                            for (let data of datas) {
+                                if (historicalTagIds.has(data.tagnameId)) {
+                                    value[data.tagnameId] = data;
+                                    savedCount++;
+                                }
+                            }
+
+                            if (Object.keys(value).length !== 0) {
+                                await HistoricalValueModel.updateAsync(
+                                    { date: startDate },
+                                    {
+                                        $push: {
+                                            values: {
+                                                value,
+                                                ts: date.setHours(
+                                                    date.getHours(),
+                                                    date.getMinutes(),
+                                                    0,
+                                                    0
+                                                ),
+                                            },
+                                        },
+                                    },
+                                    { upsert: true }
+                                );
+                            }
+
+                            await HistoricalValueModel.loadDatabaseAsync();
+
+                            setTimeout(() => {
+                                fs.copyFile(
+                                    `${fileName.DATABASE_FOLDER_PATH}/historicalvalue.db`,
+                                    `${fileName.DATABASE_FOLDER_PATH}/historicalvalue.db.backup`,
+                                    (err) => err && console.log(err)
+                                );
+                            }, 20000);
+
+                            console.log(`[saveDataToDb] [TT10/2021] Saved ${savedCount}/${datas.length} tags at ${new Date().toLocaleTimeString()}`);
+                        } catch (error) {
+                            console.error('[saveDataToDb] [TT10/2021] Error:', error);
+                        }
+                    },
+                    null,
+                    true,
+                    'Asia/Ho_Chi_Minh'
+                );
+
+                console.log(`[saveDataToDb] Started TT10/2021 CronJob (every 5 minutes)`);
+            }
+
+            // -------------------------------
+            // Trường hợp 3: type = "Trigger" 
+            // -------------------------------
+            else if (type === 'Trigger') {
+                console.log(`[saveDataToDb] Trigger mode - No automatic saving`);
+
+            }
+
+            // -------------------------------
+            // Trường hợp không hợp lệ
+            // -------------------------------
+            else {
+                console.log(`[saveDataToDb] Unknown type: ${type}`);
+            }
+        } catch (error) {
+            console.error('saveDataToDb error:', error);
+        }
+    }
 }
 
 module.exports = GatewayHandler

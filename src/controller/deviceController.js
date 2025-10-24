@@ -1,4 +1,4 @@
-import { DeviceModel, TagnameModel, TagHistorical } from '../configs/connectDB'
+import { DeviceModel, TagnameModel, TagHistorical, HistoricalValue } from '../configs/connectDB'
 import deviceHandler from '../protocol/modbus/devicesHandlers'
 
 const filterValidFields = (data, allowedFields) => {
@@ -84,13 +84,30 @@ const updateDevice = async (rawData) => {
             return { EM: `Không tìm thấy thiết bị`, EC: 1, DT: "" };
         }
 
-        const oldDevice = await DeviceModel.findOneAsync({ _id: id });
-
-        const updateData = filterValidFields(rawData, [
+        // Lọc ra các trường hợp hợp lệ
+        let updateData = filterValidFields(rawData, [
             "name", "serialPort", "ipAddress", "port",
             "protocol", "driverName", "timeOut"
         ]);
 
+        if (updateData.driverName === "Modbus RTU Client") {
+            // RTU không cần IP và port → xóa trong DB
+            await DeviceModel.updateAsync(
+                { _id: id },
+                { $unset: { ipAddress: "", port: "" } }
+            );
+            delete updateData.ipAddress;
+            delete updateData.port;
+
+        } else if (updateData.driverName === "Modbus TCP Client") {
+            await DeviceModel.updateAsync(
+                { _id: id },
+                { $unset: { serialPort: "" } }
+            );
+            delete updateData.serialPort;
+        }
+
+        // Tiếp tục cập nhật phần còn lại
         const device = await DeviceModel.updateAsync(
             { _id: id },
             { $set: updateData },
@@ -99,7 +116,7 @@ const updateDevice = async (rawData) => {
 
         await DeviceModel.loadDatabaseAsync();
 
-        // Khi có bất kỳ thay đổi cấu hình nào → gọi reconnect
+        // Gọi reconnect
         await deviceHandler.reconnectDevice(id);
 
         return {
@@ -108,6 +125,7 @@ const updateDevice = async (rawData) => {
             DT: device,
         };
     } catch (error) {
+        console.error(error);
         return { EM: "Lỗi Server!!!", EC: -2, DT: "" };
     }
 };
@@ -139,11 +157,18 @@ const deleteDevice = async (rawData) => {
                 return this.device && ids.includes(this.device._id);
             }
         }, { multi: true });
+        await HistoricalValue.removeAsync({
+            $where: function () {
+                return this.device && ids.includes(this.device._id);
+            }
+        }, { multi: true });
+
 
         //  reload
         await DeviceModel.loadDatabaseAsync();
         await TagnameModel.loadDatabaseAsync();
         await TagHistorical.loadDatabaseAsync();
+        await HistoricalValue.loadDatabaseAsync();
 
         return {
             EM: 'Xóa thiết bị thành công',

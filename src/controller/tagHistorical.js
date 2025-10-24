@@ -1,4 +1,4 @@
-import { TagHistorical } from '../configs/connectDB'
+import { TagHistorical, HistoricalValueModel } from '../configs/connectDB'
 
 const getHistorical = async () => {
     try {
@@ -51,7 +51,6 @@ const createHistorical = async (rawData) => {
     }
 };
 
-
 const updateHistorical = async (rawData) => {
     // try {
     //     console.log('check rawdata upadate com: ', rawData)
@@ -98,39 +97,125 @@ const updateHistorical = async (rawData) => {
 
 const deleteHistorical = async (rawData) => {
     try {
-        //console.log('check rawData Delete: ', rawData)
-        // Lấy danh sách ids từ dữ liệu gửi lên
-        const { ids } = rawData;
+        console.log('check rawData Delete: ', rawData);
+        const { list } = rawData;
 
-        // Kiểm tra input hợp lệ
-        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        if (!list || !Array.isArray(list) || list.length === 0) {
             return {
-                EM: 'Không có ID nào được chọn để xóa',
+                EM: 'Không có dữ liệu nào được chọn để xóa',
                 EC: 1,
                 DT: ''
             };
         }
 
-        // Xóa tất cả bản ghi có _id nằm trong mảng ids
+        // Lấy ra mảng id và tagnameId từ list
+        const ids = list.map(item => item.id);
+        const tagnameIds = list.map(item => item.tagnameId);
+
+        console.log(`[deleteHistorical] Xóa ${ids.length} tags:`, tagnameIds);
+
+        // 1. Xóa trong TagHistorical
         await TagHistorical.removeAsync(
-            { _id: { $in: ids } },   // tìm tất cả _id nằm trong mảng ids
-            { multi: true }          // cho phép xoá nhiều record
+            { _id: { $in: ids } },
+            { multi: true }
         );
 
-        // Reload lại database
+        // 2. Xóa dữ liệu trong HistoricalValueModel theo tagnameId
+        if (tagnameIds.length > 0) {
+            await removeTagsFromHistoricalData(tagnameIds);
+        }
+
+        // Reload database
         await TagHistorical.loadDatabaseAsync();
+        await HistoricalValueModel.loadDatabaseAsync();
 
         return {
-            EM: 'Xóa Tag Historical thành công',
+            EM: 'Xóa Tag Historical và dữ liệu lịch sử thành công',
             EC: 0,
-            DT: ''
+            DT: { deletedTagIds: tagnameIds }
         };
     } catch (error) {
+        console.log('Error deleteHistorical:', error);
         return {
-            EM: 'Lỗi ở ser Server!!!',
+            EM: 'Lỗi ở Server!!!',
             EC: -2,
             DT: ''
         };
+    }
+};
+
+// Hàm helper để xóa các tag cụ thể khỏi historical data
+const removeTagsFromHistoricalData = async (tagnameIds) => {
+    try {
+        // Lấy tất cả documents historical
+        const allHistoricalData = await HistoricalValueModel.findAsync({});
+        let modifiedCount = 0;
+        let deletedEntriesCount = 0;
+
+        for (let doc of allHistoricalData) {
+            if (doc.values && Array.isArray(doc.values)) {
+                let hasChanges = false;
+                let newValues = [];
+
+                // Duyệt qua từng giá trị trong values
+                for (let valueItem of doc.values) {
+                    if (valueItem && valueItem.value) {
+                        const newValue = { ...valueItem.value };
+                        let itemHasTagToDelete = false;
+
+                        // Xóa các tagnameId cần xóa khỏi value object
+                        for (let tagnameId of tagnameIds) {
+                            if (newValue[tagnameId]) {
+                                delete newValue[tagnameId];
+                                itemHasTagToDelete = true;
+                                deletedEntriesCount++;
+                            }
+                        }
+
+                        // Nếu value object không rỗng sau khi xóa, giữ lại entry này
+                        if (Object.keys(newValue).length > 0) {
+                            newValues.push({
+                                value: newValue,
+                                ts: valueItem.ts
+                            });
+                        } else {
+                            // Nếu value rỗng, bỏ entry này
+                            hasChanges = true;
+                        }
+
+                        if (itemHasTagToDelete) {
+                            hasChanges = true;
+                        }
+                    } else {
+                        // Giữ lại các entry không có value
+                        newValues.push(valueItem);
+                    }
+                }
+
+                // Cập nhật document nếu có thay đổi
+                if (hasChanges) {
+                    if (newValues.length === 0) {
+                        // Nếu không còn value nào, xóa document
+                        await HistoricalValueModel.removeAsync({ _id: doc._id });
+                        modifiedCount++;
+                    } else {
+                        // Cập nhật values mới
+                        await HistoricalValueModel.updateAsync(
+                            { _id: doc._id },
+                            { $set: { values: newValues } }
+                        );
+                        modifiedCount++;
+                    }
+                }
+            }
+        }
+
+        console.log(`[removeTagsFromHistoricalData] Đã xóa ${deletedEntriesCount} entries từ ${modifiedCount} documents`);
+        return { deletedEntriesCount, modifiedDocuments: modifiedCount };
+
+    } catch (error) {
+        console.error('removeTagsFromHistoricalData error:', error);
+        throw error;
     }
 };
 
