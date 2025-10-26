@@ -33,6 +33,7 @@ const initApiRoutes = (app) => {
     router.put("/historical/update-config", apiController.handleUpdateConfig);
     /* API Historical Value */
     router.get("/historical/get-listdata", apiController.handleGetHistoricalValue);
+    router.post("/historical/get-listdata-time", apiController.handleGetHistoricalValueTime);
     router.delete("/historical/delete-tagvalue", apiController.handleDeleteValueHistorical);
 
     return app.use("/api/v1/", router);

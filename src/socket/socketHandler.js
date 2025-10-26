@@ -1,5 +1,5 @@
 import GatewayHandler from '../gateway/getwayHandler';
-// import { deleteValueHistorical } from '../controller/historicalValueController'
+
 let gateway;
 
 ; (async () => {
@@ -24,18 +24,15 @@ const connect = (socket) => {
         }
     });
 
-    // socket.on("CREATE TAG HISTORICAL", async () => {
-    //     await gateway.saveDataToDb();
-    // });
+    socket.on("CREATE TAG", async () => {
+        console.log("CREATE TAG");
+        await gateway.connectAll();
+    });
 
     socket.on("CHANGE HISTORICAL TYPE", async () => {
         await gateway.saveDataToDb();
     });
 
-    // socket.on("DELETE TAG HISTORICAL", async () => {
-    //     console.log('reload historical')
-    //     await gateway.saveDataToDb();
-    // });
 };
 
 export default connect;

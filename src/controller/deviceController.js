@@ -1,5 +1,6 @@
-import { DeviceModel, TagnameModel, TagHistorical, HistoricalValue } from '../configs/connectDB'
-import deviceHandler from '../protocol/modbus/devicesHandlers'
+import { DeviceModel, TagnameModel, TagHistorical } from '../configs/connectDB';
+import HistoricalValue from '../controller/historicalValueController';
+import deviceHandler from '../protocol/modbus/devicesHandlers';
 
 const filterValidFields = (data, allowedFields) => {
     const result = {}
@@ -36,7 +37,7 @@ const getAllDevice = async () => {
 
 const createDeviceController = async (rawData) => {
     try {
-        console.log('Tạo mới device: ', rawData);
+        //console.log('Tạo mới device: ', rawData);
         const { name } = rawData;
         // Kiểm tra trùng tên
         const checkName = await DeviceModel.findAsync({ name });
@@ -132,7 +133,7 @@ const updateDevice = async (rawData) => {
 
 const deleteDevice = async (rawData) => {
     try {
-        //console.log('check rawData Delete: ', rawData)
+        console.log('check rawData Delete: ', rawData)
         const { ids } = rawData
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return {
@@ -157,18 +158,12 @@ const deleteDevice = async (rawData) => {
                 return this.device && ids.includes(this.device._id);
             }
         }, { multi: true });
-        await HistoricalValue.removeAsync({
-            $where: function () {
-                return this.device && ids.includes(this.device._id);
-            }
-        }, { multi: true });
 
-
+        await HistoricalValue.deleteValueHistoricalDeviceId(rawData)
         //  reload
         await DeviceModel.loadDatabaseAsync();
         await TagnameModel.loadDatabaseAsync();
         await TagHistorical.loadDatabaseAsync();
-        await HistoricalValue.loadDatabaseAsync();
 
         return {
             EM: 'Xóa thiết bị thành công',

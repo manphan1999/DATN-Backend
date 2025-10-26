@@ -517,9 +517,26 @@ const handleGetHistoricalValue = async (req, res) => {
     }
 }
 
+const handleGetHistoricalValueTime = async (req, res) => {
+    try {
+        const data = await HistoricalValue.getValueHistoricalTime(req.body);
+        return res.status(200).json({
+            EM: data.EM,
+            EC: data.EC,
+            DT: data.DT
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            EM: 'Lỗi Server!!!',
+            EC: -2,
+            DT: ''
+        });
+    }
+};
+
 const handleDeleteValueHistorical = async (req, res) => {
     try {
-        console.log('req.body: ', req.body)
         if (!req.body) {
             return res.status(200).json({
                 EM: `Không có dữ liệu`,    // Error message
@@ -528,7 +545,7 @@ const handleDeleteValueHistorical = async (req, res) => {
             })
         }
 
-        let data = await HistoricalValue.deleteValueHistorical(req.body)
+        let data = await HistoricalValue.deleteAllValueHistorical(req.body)
         return res.status(200).json({
             EM: data.EM,    // Error message
             EC: data.EC,    // Error code
@@ -551,5 +568,5 @@ module.exports = {
     handleGetAllComs, handleUpdateCom,
     handleGetAllChannels, handleUpdateChannel, handleDeleteChannel, handleCreateNewTag, handleGetDataFormat, handleGetDataType, handleGetFunctionCodeModbus,
     handleGetAllHistorical, handleCreateTagHistorical, handleGetAllConfig, handleUpdateConfig, handleDeleteConfig, handleDeleteHistorical,
-    handleGetHistoricalValue, handleDeleteValueHistorical
+    handleGetHistoricalValue, handleGetHistoricalValueTime, handleDeleteValueHistorical
 }

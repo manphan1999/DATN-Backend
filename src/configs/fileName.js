@@ -1,12 +1,8 @@
 const fileName = {
     FTP_FOLDER_PATH: '/media/pi/storages',
-    DATABASE_FOLDER_PATH: 'C:/Users/Manx-Home/Desktop/DATN/data',
-    DATABASE_FOLDER_PATH_LOCAL: 'C:/Users/Manx-Home/Desktop/DATN/Backend/database',
-
-    // MODBUS_TCP_CLIENT: 'Modbus TCP Client',
-    // MODBUS_RTU_CLIENT: 'Modbus RTU Client',
-    // SIEMENS: 'Siemens',
-    // MQTT: 'MQTT',
+    DATABASE_FOLDER_PATH: 'C:/Users/User/Desktop/DATN/data',
+    DATABASE_FOLDER_PATH_LOCAL: 'C:/Users/User/Desktop/DATN/Backend/database',
+    // DATABASE_FOLDER_PATH_LOCAL: 'C:/Users/Manx-Home/Desktop/DATN/Backend/database',
 }
 
 module.exports = fileName 

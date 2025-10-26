@@ -98,6 +98,7 @@ class GatewayHandler {
                             channel: tagname.channel,
                             slaveId: tagname.slaveId,
                             tagname: tagname.name,
+                            deviceId: tagname.device._id,
                             rawValue: 0,
                             value: 0,
                             unit: tagname.unit,
