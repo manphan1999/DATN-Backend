@@ -83,6 +83,122 @@ const HistoricalValueModel = new Datastore({
             await HistoricalValueModel.loadDatabaseAsync()
         }
     })()
-
-export { DeviceModel, ComModel, TagnameModel, TagHistorical, ConfigHistorical, HistoricalValueModel }
+//////////////////////////////////////////////////////////////////////////////
+const TagAlarmModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/tagAlarm.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await TagAlarmModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const AlarmValueModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH}/alarmvalue.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await AlarmValueModel.loadDatabaseAsync()
+        } catch (error) {
+            fs.unlink(`${fileName.DATABASE_FOLDER_PATH}/alarmvalue.db`, (err) => {
+                if (err) fileName.log(err)
+                fs.copyFile(
+                    `${fileName.DATABASE_FOLDER_PATH}/alarmvalue.db.backup`,
+                    `${fileName.DATABASE_FOLDER_PATH}/alarmvalue.db`,
+                    function (err) {
+                        if (err) console.log(err)
+                    }
+                )
+            })
+            await AlarmValueModel.loadDatabaseAsync()
+        }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const AppNotifyModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/configNotify.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await AppNotifyModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const FTPServerModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/ftpServer.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await FTPServerModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const MySQLServerModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/mysqlServer.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await MySQLServerModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const SQLServerModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/sqlServer.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await SQLServerModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const UserModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/users.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await UserModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const PublishModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/publish.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await UserModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const RTUServerModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/rtuServer.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await UserModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const TCPServerModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/tcpServer.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await UserModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+export {
+    DeviceModel, ComModel, TagnameModel, TagHistorical, ConfigHistorical,
+    HistoricalValueModel, TagAlarmModel, AppNotifyModel, AlarmValueModel,
+    FTPServerModel, MySQLServerModel, SQLServerModel, UserModel,
+    PublishModel, RTUServerModel, TCPServerModel,
+}
 

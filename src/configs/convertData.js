@@ -1,3 +1,35 @@
+
+const functionCodeData = {
+    Modbus: [
+        { _id: 1, name: '01 Read Coil (0x)' },
+        { _id: 2, name: '02 Read Discrete Input (1x)' },
+        { _id: 3, name: '03 Read Holding Registers (4x)' },
+        { _id: 4, name: '04 Read Input Registers (3x)' },
+        { _id: 5, name: '05 Write Single Coil' },
+        { _id: 6, name: '06 Write Single Register' },
+        { _id: 15, name: '15 Write Multiple Coil' },
+        { _id: 16, name: '16 Write Multiple Register' },
+    ],
+    MQTT: [
+        { _id: 20, name: 'Publish' },
+        { _id: 21, name: 'Subcribe' },
+    ]
+
+}
+
+// const functionCodeData = [
+//     { _id: 1, name: '01 Read Coil (0x)' },
+//     { _id: 2, name: '02 Read Discrete Input (1x)' },
+//     { _id: 3, name: '03 Read Holding Registers (4x)' },
+//     { _id: 4, name: '04 Read Input Registers (3x)' },
+//     { _id: 5, name: '05 Write Single Coil' },
+//     { _id: 6, name: '06 Write Single Register' },
+//     { _id: 15, name: '15 Write Multiple Coil' },
+//     { _id: 16, name: '16 Write Multiple Register' },
+//     { _id: 20, name: 'Publish' },
+//     { _id: 21, name: 'Subcribe' },
+// ]
+
 const dataFormat = [
     { _id: 1, name: '16-bit Signed' },
     { _id: 2, name: '16-bit Unsigned' },
@@ -43,16 +75,7 @@ const dataType = [
 
 ]
 
-const functionCodeModbus = [
-    { _id: 1, name: '01 Read Coil (0x)' },
-    { _id: 2, name: '02 Read Discrete Input (1x)' },
-    { _id: 3, name: '03 Read Holding Registers (4x)' },
-    { _id: 4, name: '04 Read Input Registers (3x)' },
-    { _id: 5, name: '05 Write Single Coil' },
-    { _id: 6, name: '06 Write Single Register' },
-    { _id: 15, name: '15 Write Multiple Coil' },
-    { _id: 16, name: '16 Write Multiple Register' },
-]
+const getAllFunction = () => functionCodeData;
 
 const getDataLenght = (type) => {
     let addressByte = 2
@@ -340,6 +363,5 @@ const writeDataLenght = (value, type) => {
 };
 
 module.exports = {
-    dataFormat, dataType, functionCodeModbus, swapData, getDataLenght, writeDataLenght
-
+    dataFormat, dataType, getAllFunction, swapData, getDataLenght, writeDataLenght
 }

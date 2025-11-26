@@ -1,22 +1,6 @@
-import { DeviceModel, TagnameModel, TagHistorical } from '../configs/connectDB';
+import { DeviceModel, TagnameModel, TagHistorical, TagAlarmModel } from '../configs/connectDB';
 import HistoricalValue from '../controller/historicalValueController';
-import deviceHandler from '../protocol/modbus/devicesHandlers';
-
-const filterValidFields = (data, allowedFields) => {
-    const result = {}
-    allowedFields.forEach((field) => {
-        if (data[field] !== null && data[field] !== undefined && data[field] !== "") {
-            // ép kiểu number cho port và timeOut 
-            if ((field === "port" || field === "timeOut") && data[field] !== "") {
-                result[field] = Number(data[field])
-            } else {
-                result[field] = data[field]
-            }
-        }
-    })
-    return result;
-}
-
+import TagAlarmValue from '../controller/alarmValueController';
 
 const getAllDevice = async () => {
     try {
@@ -35,9 +19,23 @@ const getAllDevice = async () => {
     }
 }
 
+const filterValidFields = (data, allowedFields) => {
+    const result = {}
+    allowedFields.forEach((field) => {
+        if (data[field] !== undefined && data[field] !== null && data[field] !== "") {
+            // ép kiểu number cho port và timeOut
+            if ((field === "port" || field === "timeOut")) {
+                result[field] = Number(data[field])
+            } else {
+                result[field] = data[field]
+            }
+        }
+    })
+    return result;
+}
+
 const createDeviceController = async (rawData) => {
     try {
-        //console.log('Tạo mới device: ', rawData);
         const { name } = rawData;
         // Kiểm tra trùng tên
         const checkName = await DeviceModel.findAsync({ name });
@@ -51,13 +49,8 @@ const createDeviceController = async (rawData) => {
 
         // Lọc trường hợp lệ
         const newData = filterValidFields(rawData, [
-            "name",
-            "serialPort",
-            "ipAddress",
-            "port",
-            "protocol",
-            "driverName",
-            "timeOut",
+            "name", "serialPort", "ipAddress", "port", "protocol",
+            "driverName", "username", "password", "timeOut",
         ]);
 
         // Thêm mới vào database
@@ -88,19 +81,31 @@ const updateDevice = async (rawData) => {
         // Lọc ra các trường hợp hợp lệ
         let updateData = filterValidFields(rawData, [
             "name", "serialPort", "ipAddress", "port",
-            "protocol", "driverName", "timeOut"
+            "protocol", "username", "password", "driverName", "timeOut"
         ]);
 
         if (updateData.driverName === "Modbus RTU Client") {
-            // RTU không cần IP và port → xóa trong DB
             await DeviceModel.updateAsync(
                 { _id: id },
-                { $unset: { ipAddress: "", port: "" } }
+                { $unset: { ipAddress: "", port: "", username: "", password: "" } }
             );
             delete updateData.ipAddress;
             delete updateData.port;
+            delete updateData.username;
+            delete updateData.password;
+        }
 
-        } else if (updateData.driverName === "Modbus TCP Client") {
+        else if (updateData.driverName === "Modbus TCP Client" || updateData.driverName === "S7-1200") {
+            await DeviceModel.updateAsync(
+                { _id: id },
+                { $unset: { serialPort: "", username: "", password: "" } }
+            );
+            delete updateData.serialPort;
+            delete updateData.username;
+            delete updateData.password;
+        }
+
+        else if (updateData.driverName === "MQTT Client") {
             await DeviceModel.updateAsync(
                 { _id: id },
                 { $unset: { serialPort: "" } }
@@ -118,7 +123,7 @@ const updateDevice = async (rawData) => {
         await DeviceModel.loadDatabaseAsync();
 
         // Gọi reconnect
-        await deviceHandler.reconnectDevice(id);
+        //await deviceHandler.reconnectDevice(id);
 
         return {
             EM: "Cập nhật thiết bị thành công",
@@ -133,7 +138,7 @@ const updateDevice = async (rawData) => {
 
 const deleteDevice = async (rawData) => {
     try {
-        console.log('check rawData Delete: ', rawData)
+        console.log('check Device Delete: ', rawData)
         const { ids } = rawData
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return {
@@ -158,12 +163,19 @@ const deleteDevice = async (rawData) => {
                 return this.device && ids.includes(this.device._id);
             }
         }, { multi: true });
+        await TagAlarmModel.removeAsync(
+            { deviceId: { $in: ids } },
+            { multi: true }
+        );
 
-        await HistoricalValue.deleteValueHistoricalDeviceId(rawData)
+        await HistoricalValue.deleteValueHistoricalDeviceId(rawData);
+        await TagAlarmValue.deleteValueAlarmDeviceId(rawData);
+
         //  reload
         await DeviceModel.loadDatabaseAsync();
         await TagnameModel.loadDatabaseAsync();
         await TagHistorical.loadDatabaseAsync();
+        await TagAlarmModel.loadDatabaseAsync();
 
         return {
             EM: 'Xóa thiết bị thành công',
@@ -178,6 +190,7 @@ const deleteDevice = async (rawData) => {
         }
     }
 
-}
+};
+
 
 module.exports = { createDeviceController, getAllDevice, updateDevice, deleteDevice }
