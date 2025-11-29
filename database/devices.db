@@ -1,2 +1,1 @@
-{"name":"HMI","ipAddress":"115.75.3.72","port":8502,"protocol":"Modbus","driverName":"Modbus TCP Client","timeOut":100,"_id":"VJ8UVKcUlI5gCum7"}
-{"name":"1212","ipAddress":"115.75.3.72","port":1883,"protocol":"MQTT","driverName":"MQTT Client","username":"kythuat","password":"123!@#","timeOut":1000,"_id":"YY3SKvdTh127p7YD"}
+{"name":"PLC","serialPort":"COM10","protocol":"Modbus","driverName":"Modbus RTU Client","timeOut":1000,"_id":"KoJQvYkLTZ21dsxh"}

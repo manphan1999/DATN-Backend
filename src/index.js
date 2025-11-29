@@ -6,8 +6,10 @@ import bodyParser from "body-parser";
 import configCors from './configs/cors'
 import { Server } from 'socket.io'
 import connect from './socket/socketHandler'
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http'
 import configViewEngine from './configs/viewEngine';
+import { createJWT, verifyToken } from '../src/middlewares/authentication'
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -23,6 +25,7 @@ const io = new Server(server, {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 global._io = io
 global._io.on('connection', connect)
@@ -31,7 +34,6 @@ global._io.on('connection', connect)
 configCors(app);
 
 initWebRoutes(app);
-
 // Khởi tạo routes
 initApiRoutes(app);
 

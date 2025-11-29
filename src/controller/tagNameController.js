@@ -24,8 +24,6 @@ const getAllTagName = async () => {
 
 const createTagName = async (rawData) => {
     try {
-        console.log('check new tag: ', rawData);
-
         const {
             channel,
             name,

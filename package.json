@@ -5,34 +5,37 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --exec npx babel-node src/index.js"
+    "start": "nodemon --exec babel-node src/index.js"
   },
   "author": "Manx",
   "license": "ISC",
   "dependencies": {
-    "@babel/core": "7.15.4",
-    "@babel/node": "7.15.4",
-    "@babel/preset-env": "7.15.4",
     "@seald-io/nedb": "4.0.2",
     "axios": "^1.13.2",
     "basic-ftp": "5.0.3",
     "bcryptjs": "2.4.3",
     "bluebird": "3.7.2",
     "body-parser": "1.19.1",
+    "cookie-parser": "1.4.6",
     "cors": "2.8.5",
     "cron": "3.0.0",
     "dotenv": "10.0.0",
     "ejs": "3.1.6",
     "express": "4.17.2",
+    "jsonwebtoken": "8.5.1",
     "modbus-serial": "8.0.13",
     "mqtt": "^5.14.1",
     "mssql": "^12.1.0",
     "mysql2": "2.3.3",
     "node-cron": "3.0.0",
-    "node-snap7": "^1.0.9",
-    "nodemon": "2.0.15",
     "sequelize": "6.13.0",
     "sequelize-cli": "6.3.0",
     "socket.io": "4.7.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.10",
+    "@babel/node": "^7.22.10",
+    "@babel/preset-env": "^7.22.10",
+    "nodemon": "^3.1.11"
   }
 }

@@ -3,7 +3,7 @@ import { CronJob } from 'cron';
 import fileName from '../configs/fileName'
 import {
     TagnameModel, HistoricalValueModel, AlarmValueModel, FTPServerModel,
-    MySQLServerModel, SQLServerModel
+    MySQLServerModel, SQLServerModel, RTUServerModel, TCPServerModel
 } from '../configs/connectDB';
 import TagHistorical from '../controller/tagHistoricalController';
 import TagAlarm from '../controller/tagAlarmController'
@@ -13,6 +13,8 @@ import { sendTelegramAlert, formatAlertMessage } from '../ultils/telegramApp'
 import { sendLineAlert, formatLineAlert } from '../ultils/lineApp'
 import configHistorical from '../controller/configHistoricalController'
 import ModbusConnectionManager from '../protocol/modbus/modbusClient';
+import ModbusServerRTU from '../protocol/modbus/modbusRTUServer';
+import ModbusServerTCP from '../protocol/modbus/modbusTCPServer';
 import MQTTManager from '../protocol/mqtt/mqtt';
 import AppNotifyAlarm from '../controller/configAppNotifyController'
 import { writeFileTxt, writeFileCsv, deleteFileFtp, sendFtp } from '../ultils/ftpHandler'
@@ -30,13 +32,17 @@ class GatewayHandler {
         this.cronJobUploadMysql = {};
         this.cronJobUploadSql = {};
         this.modbusServer = {};
-        this.intervalModbusServer = {};
+        this.intervalModbusServer = {
+            TCP: null,
+            RTU: null,
+        };
         this.modbusClient = null;
         this.calibrateStatus = 0;
         this.currentConfig = null;
         this.saveDataTimer = null;
         this.saveDataJob = null;
         this.currentHistoricalTagsHash = null;
+        this.modbusServer = {}
 
         this.mqttConfig = {
             enabled: false,
@@ -49,7 +55,7 @@ class GatewayHandler {
         try {
             // Sử dụng ModbusManager để kết nối tất cả thiết bị
             const results = await this.modbusManager.connectAll();
-
+            // console.log('check results: ', results)
             // Đồng bộ devices với ModbusManager
             this.syncDevicesWithModbusManager();
             return results;
@@ -189,6 +195,14 @@ class GatewayHandler {
                 global._io.emit('SERVER SEND HOME DATA', this.data)
             }, 1000)// Tần số quét dữ liệu
         } catch (error) { console.error('Error in readData:', error); }
+    }
+
+    getData() {
+        try {
+            return this.data
+        } catch (error) {
+            // console.log(`gateway > gatewayHandler > getData [error]: ${error}`)
+        }
     }
 
     async handleDataModbus(modbusClient, functionCode, tagname) {
@@ -375,17 +389,212 @@ class GatewayHandler {
         }
     }
 
-    getData() {
+    /**
+     * MODBUS SERVER
+     */
+
+    //CHUYỂN ĐỔI GIÁ TRỊ THÀNH REGISTERS
+    valueToRegisters(value, dataType) {
         try {
-            return this.data
+            const bufferToRegisters = (buffer) => {
+                const regs = [];
+                for (let i = 0; i < buffer.length; i += 2) {
+                    regs.push(buffer.readUInt16BE(i));
+                }
+                return regs;
+            };
+            const buf = writeDataLenght(value, dataType);
+            const regs = bufferToRegisters(buf);
+            return regs;
         } catch (error) {
-            // console.log(`gateway > gatewayHandler > getData [error]: ${error}`)
+            console.error('Error in valueToRegisters:', error);
+            return [0];
+        }
+    }
+
+
+    async connectModbusServer(type) {
+        try {
+            if (type == 'TCP' && !this.modbusServer[type]) {
+                this.modbusServer[type] = new ModbusServerTCP()
+                this.modbusServer[type].connectModbusServer()
+            } else if (type == 'RTU' && !this.modbusServer[type]) {
+                this.modbusServer[type] = new ModbusServerRTU()
+                this.modbusServer[type].connectModbusServer()
+            }
+        } catch (error) { }
+    }
+
+    /**
+    * LẤY DỮ LIỆU THEO TAGNAME ID 
+    */
+    async getDataByTagnameId(tagnameId) {
+        try {
+            const result = this.data.find(item =>
+                item.tagnameId.toString() === tagnameId.toString()
+            );
+
+            if (!result) {
+                console.log(`No data found for tagnameId: ${tagnameId}`);
+            }
+
+            return result;
+        } catch (error) {
+            return null;
         }
     }
 
     /**
-    * LƯU TRỮ DATA HISTORICAL
+    * GHI DỮ LIỆU VÀO MODBUS SERVER
     */
+    async writeDataToModbusServer() {
+        try {
+            const ensureArraySize = (arr, size) => {
+                while (arr.length <= size) {
+                    arr.push(0);
+                }
+            };
+            // Xử lý cho TCP Server
+            if (this.modbusServer['TCP']) {
+                if (this.intervalModbusServer['TCP']) {
+                    clearInterval(this.intervalModbusServer['TCP']);
+                    this.intervalModbusServer['TCP'] = null;
+                }
+
+                this.intervalModbusServer['TCP'] = setInterval(async () => {
+                    try {
+                        const modbusServerTCPList = await TCPServerModel.findAsync();
+                        for (let modbusServerTCP of modbusServerTCPList) {
+                            const tagData = await this.getDataByTagnameId(modbusServerTCP.id);
+                            if (!tagData) { continue; }
+
+                            const value = tagData.value;
+                            if (value === undefined) continue;
+
+                            switch (modbusServerTCP.functionCode) {
+                                case 1:
+                                    this.modbusServer['TCP'].data.coils[modbusServerTCP.address] = value > 0;
+                                    break;
+                                case 2:
+                                    this.modbusServer['TCP'].data.discreteInputs[modbusServerTCP.address] = value > 0;
+                                    break;
+                                case 3: {
+                                    const regs = this.valueToRegisters(value, modbusServerTCP.dataType);
+                                    const addr = Number(modbusServerTCP.address);
+                                    ensureArraySize(this.modbusServer['TCP'].data.holdingRegisters, addr + regs.length);
+
+                                    regs.forEach((v, i) => {
+                                        this.modbusServer['TCP'].data.holdingRegisters[addr + i] = v;
+                                    });
+                                    break;
+                                }
+
+                                case 4: {
+                                    const regs = this.valueToRegisters(value, modbusServerTCP.dataType);
+                                    const addr = Number(modbusServerTCP.address);
+
+                                    ensureArraySize(this.modbusServer['TCP'].data.inputRegisters, addr + regs.length);
+
+                                    regs.forEach((v, i) => {
+                                        this.modbusServer['TCP'].data.inputRegisters[addr + i] = v;
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error in TCP Server interval:', error);
+                    }
+                }, 400);
+            }
+            // Xử lý cho RTU Server
+            if (this.modbusServer['RTU']) {
+                if (this.intervalModbusServer['RTU']) {
+                    clearInterval(this.intervalModbusServer['RTU']);
+                    this.intervalModbusServer['RTU'] = null;
+                }
+
+                this.intervalModbusServer['RTU'] = setInterval(async () => {
+                    try {
+                        const modbusServerRTUList = await RTUServerModel.findAsync();
+                        for (let modbusServerRTU of modbusServerRTUList) {
+                            const tagData = await this.getDataByTagnameId(modbusServerRTU.id);
+                            if (!tagData) continue;
+
+                            const value = tagData.value;
+                            if (value === undefined) continue;
+
+                            const addr = Number(modbusServerRTU.address);
+                            const server = this.modbusServer['RTU'];
+
+                            // Hàm đảm bảo array đủ lớn
+                            const ensureArraySize = (arr, size) => {
+                                while (arr.length <= size) arr.push(0);
+                            };
+
+                            switch (modbusServerRTU.functionCode) {
+                                case 1: // Coils
+                                    server.data.coils[addr] = value > 0;
+                                    break;
+
+                                case 2: // Discrete Inputs
+                                    server.data.discreteInputs[addr] = value > 0;
+                                    break;
+
+                                case 3: { // Holding Registers
+                                    const regs = this.valueToRegisters(value, modbusServerRTU.dataType);
+                                    const addr = Number(modbusServerRTU.address);
+                                    ensureArraySize(server.data.holdingRegisters, addr + regs.length);
+                                    regs.forEach((v, i) => {
+                                        server.setData(addr + i, v, 'holdingRegisters');
+                                    });
+                                    break;
+                                }
+
+                                case 4: { // Input Registers
+                                    const regs = this.valueToRegisters(value, modbusServerRTU.dataType);
+                                    const addr = Number(modbusServerRTU.address);
+                                    ensureArraySize(server.data.inputRegisters, addr + regs.length);
+                                    regs.forEach((v, i) => {
+                                        server.setData(addr + i, v, 'inputRegisters');
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error in RTU Server interval:', error);
+                    }
+                }, 400);
+            }
+        } catch (error) {
+            console.error('Error in writeDataToModbusServer:', error);
+        }
+    }
+
+    /**
+     * NGẮT KẾT NỐI MODBUS SERVER 
+     */
+    async disconnectModbusServer(type) {
+        try {
+            if (this.modbusServer[type]) {
+                this.modbusServer[type].disconnectModbusServer();
+                delete this.modbusServer[type];
+            }
+            // Clear interval riêng cho từng loại server
+            if (this.intervalModbusServer[type]) {
+                clearInterval(this.intervalModbusServer[type]);
+                delete this.intervalModbusServer[type];
+            }
+            console.log(` Modbus ${type} Server disconnected`);
+        } catch (error) {
+            console.error(`Error disconnecting Modbus ${type} Server:`, error);
+        }
+    }
+
+    /**
+ * LƯU TRỮ DATA HISTORICAL
+ */
     async saveHistoricalToDb() {
         try {
             const getData = this.getData.bind(this);

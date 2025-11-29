@@ -18,6 +18,7 @@ import { getAllProtocol } from '../configs/protocol.js';
 import { getAllFunction } from '../configs/convertData.js';
 import { connectToMySQL, generateTableFromTags } from '../ultils/mysqlHandler.js'
 import { connectToSQLServer, generateTableFromTagsSQL } from '../ultils/sqlHandler.js'
+import jwt from 'jsonwebtoken';
 
 const handleGetAllProtocol = async (req, res) => {
     try {
@@ -1659,6 +1660,31 @@ const handleDeleteUser = async (req, res) => {
     }
 }
 
+/* Handle Login */
+const handleLogin = async (req, res) => {
+    const { username, password } = req.body;
+
+    const result = await UserManagement.handleUserLogin({ username, password });
+
+    if (result.EC === 0) {
+        // Tạo payload cho JWT
+        const payload = { username };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Gửi cookie về frontend
+        res.cookie('access_token', token, {
+            httpOnly: true,  // không cho JS frontend đọc trực tiếp
+            maxAge: 60 * 60 * 1000, // 1h
+            sameSite: 'Strict',
+            secure: false, // để true nếu dùng https
+        });
+
+        return res.json({ EM: 'Đăng nhập thành công', EC: 0 });
+    } else {
+        return res.status(401).json({ EM: 'Đăng nhập thất bại', EC: 1 });
+    }
+}
+
 module.exports = {
     handleGetAllProtocol,
     handleCreateNewDevice, handleGetAllDevice, handleUpdateDevice, handleDeleteDevice,
@@ -1677,5 +1703,5 @@ module.exports = {
     handleGetAllPublish, handleCreatePublish, handleUpdatePublish, handleDeletePublish,
     handleGetAllRTUServer, handleCreateRTUServer, handleUpdateRTUServer, handleDeleteRTUServer,
     handleGetAllTCPServer, handleCreateTCPServer, handleUpdateTCPServer, handleDeleteTCPServer,
-    handleGetAllUser, handleCreateUser, handleUpdateUser, handleDeleteUser
+    handleGetAllUser, handleCreateUser, handleUpdateUser, handleDeleteUser, handleLogin
 }

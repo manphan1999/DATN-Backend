@@ -76,7 +76,7 @@ const updateTCPServer = async (rawData) => {
         delete dataToInsert.symbol;
         delete dataToInsert.slaveId;
         const { id, name, deviceId, deviceName, functionCode, dataFormat, dataType, address } = dataToInsert;
-
+        console.log(dataToInsert)
         if (!id) {
             return {
                 EM: "Không tìm thấy ID để cập nhật",
@@ -87,7 +87,7 @@ const updateTCPServer = async (rawData) => {
 
         await TCPServerModel.updateAsync(
             { _id: id },
-            { $set: { name, deviceId, deviceName, functionCode, dataFormat, dataType, slaveId, address } },
+            { $set: { name, deviceId, deviceName, functionCode, dataFormat, dataType, address } },
             { returnUpdatedDocs: true }
         );
 

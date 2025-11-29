@@ -114,7 +114,6 @@ class ModbusConnectionManager {
                 serialPort: comConfig.serialPort
             };
 
-            // THỐNG NHẤT: dùng device._id làm key
             this.connections.set(device._id, connectionInfo);
             this.deviceConfigs.set(device._id, {
                 type: 'RTU',

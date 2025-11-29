@@ -1,5 +1,6 @@
 import express from "express";
-import apiController from "../controller/apiControllers"
+import apiController from "../controller/apiControllers";
+import CheckMiddleware from '../middlewares/authentication';
 
 const router = express.Router();
 
@@ -92,6 +93,24 @@ const initApiRoutes = (app) => {
     router.post('/user/create-user', apiController.handleCreateUser);
     router.put("/user/update-user", apiController.handleUpdateUser);
     router.delete("/user/delete-user", apiController.handleDeleteUser);
+
+    router.post('/login', apiController.handleLogin);
+    // Route public
+    // router.get('/', (req, res) => res.send('Home page'));
+    // router.get('/historical', (req, res) => res.send('Historical page'));
+
+    // router.get('/servers', CheckMiddleware.authMiddleware, (req, res) => res.send('Server page'));
+    // router.get('/users', CheckMiddleware.authMiddleware, (req, res) => res.send('User page'));
+    // router.get('/device', CheckMiddleware.authMiddleware, (req, res) => res.send('Device page'));
+
+    // router.get('/api/v1/check-auth', CheckMiddleware.authMiddleware, (req, res) => {
+    //     res.json({ EM: 'Authenticated', EC: 0, DT: req.user });
+    // });
+
+    // router.post('/logout', (req, res) => {
+    //     res.clearCookie('access_token');
+    //     res.json({ EM: 'Đăng xuất thành công', EC: 0 });
+    // });
 
     return app.use("/api/v1/", router);
 }

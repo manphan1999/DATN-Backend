@@ -6,6 +6,47 @@ const hashPassword = (password) => {
     return bcrypt.hashSync(password, salt);
 }
 
+const checkPassWord = (inputPass, hashPass) => {
+    return bcrypt.compareSync(inputPass, hashPass);
+}
+
+const handleUserLogin = async (rawData) => {
+    try {
+        console.log('check rawData: ', rawData);
+
+        // Tìm user theo username
+        const user = await UserModel.findOneAsync({ username: rawData.username });
+        console.log('check user: ', user);
+
+        if (user) {
+            let isCheckPassword = checkPassWord(rawData.password, user.password);
+            console.log('check isCheckPassword: ', isCheckPassword);
+
+            if (isCheckPassword === true) {
+                return {
+                    EM: 'Đăng nhập thành công',
+                    EC: 0,
+                    DT: { access_token: '' }
+                };
+            }
+        }
+
+        return {
+            EM: 'Đăng nhập thất bại',
+            EC: 1,
+            DT: ''
+        };
+
+    } catch (error) {
+        console.log(error);
+        return {
+            EM: 'Lỗi Server!!!',
+            EC: -2,
+            DT: ''
+        };
+    }
+};
+
 const getAllUser = async () => {
     try {
         const listUser = await UserModel.findAsync({})
@@ -26,25 +67,33 @@ const getAllUser = async () => {
 
 const createUser = async (rawData) => {
     try {
-        const existing = await UserModel.findOneAsync({ name: rawData.name });
+        const existing = await UserModel.findOneAsync({ username: rawData.username });
         if (existing) {
             return {
-                EM: `Tên User đã tồn tại: ${rawData.name}`,
+                EM: `Tên User đã tồn tại: ${rawData.username}`,
                 EC: -1,
                 DT: "",
             };
         }
 
-        const passwordHash = hashPassword(rawData.pass);
+        if (!rawData.password) {
+            return {
+                EM: "Thiếu password!",
+                EC: 1,
+                DT: "",
+            };
+        }
 
-        await UserModel.insertAsync({ ...rawData, password: passwordHash });
+        const passwordHash = hashPassword(rawData.password);
+
+        await UserModel.insertAsync({
+            username: rawData.username,
+            password: passwordHash
+        });
+
         await UserModel.loadDatabaseAsync();
 
-        return {
-            EM: "Thêm mới User thành công",
-            EC: 0,
-            DT: '',
-        };
+        return { EM: "Thêm User thành công", EC: 0, DT: "" };
 
     } catch (error) {
         console.error(error);
@@ -54,23 +103,23 @@ const createUser = async (rawData) => {
 
 const updateUser = async (rawData) => {
     try {
-        const { id, password } = rawData;
+        const { id, username, password } = rawData;
 
         if (!id) {
-            return {
-                EM: "Không tìm thấy ID để cập nhật",
-                EC: 1,
-                DT: "",
-            };
+            return { EM: "Không tìm thấy ID để cập nhật", EC: 1, DT: "" };
         }
 
-        if (password) {
-            password = hashPassword(password);
+        let updateData = {};
+
+        if (username) updateData.username = username;
+
+        if (password && password.trim() !== "") {
+            updateData.password = hashPassword(password);
         }
 
         await UserModel.updateAsync(
             { _id: id },
-            { $set: password },
+            { $set: updateData },
             { returnUpdatedDocs: true }
         );
 
@@ -84,11 +133,7 @@ const updateUser = async (rawData) => {
 
     } catch (error) {
         console.error("ERROR UPDATE User:", error);
-        return {
-            EM: "Lỗi Server!!!",
-            EC: -2,
-            DT: "",
-        };
+        return { EM: "Lỗi Server!!!", EC: -2, DT: "" };
     }
 };
 
@@ -128,4 +173,4 @@ const deleteUser = async (rawData) => {
     }
 };
 
-module.exports = { getAllUser, updateUser, createUser, deleteUser }
+module.exports = { handleUserLogin, getAllUser, updateUser, createUser, deleteUser }

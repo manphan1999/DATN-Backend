@@ -10,6 +10,8 @@ let gateway;
         gateway = new GatewayHandler();
         await gateway.connectAll();
         await gateway.readData();
+        //await gateway.connectModbusServer('TCP');
+        await gateway.writeDataToModbusServer();
         await gateway.saveHistoricalToDb();
         await gateway.saveAlarmToDb();
         await gateway.saveToFileAndSendFtp();
@@ -83,13 +85,73 @@ const connect = (socket) => {
     socket.on("DELETE MYSQL SERVER", async (data) => {
         const serverIds = data.map(d => d.id);
         await gateway.deleteMySQLConfigs(serverIds);
-        await gateway.dropMySQLTabledele(serverIds);
+        // await gateway.dropMySQLTabledele(serverIds);
     });
 
     socket.on("DELETE SQL SERVER", async (data) => {
         const serverIds = data.map(d => d.id);
         await gateway.deleteSQLConfigs(serverIds);
-        await gateway.dropSQLTable(serverIds);
+        //  await gateway.dropSQLTable(serverIds);
+    });
+
+    socket.on('START TCP SERVER', async (callback) => {
+        try {
+            await gateway.connectModbusServer('TCP');
+            await gateway.writeDataToModbusServer();
+            callback({ success: true, message: 'Start thành công' });
+        } catch (error) {
+            callback({ success: false, message: 'Start thất bại', error });
+        }
+    });
+
+    socket.on('STOP TCP SERVER', (callback) => {
+        try {
+            gateway.disconnectModbusServer('TCP');
+            callback({ success: true, message: 'Stop thành công' });
+        } catch (error) {
+            callback({ success: false, message: 'Stop thất bại', error });
+        }
+    });
+
+    socket.on('RELOAD TCP SERVER', async (callback) => {
+        try {
+            gateway.disconnectModbusServer('TCP');
+            await gateway.connectModbusServer('TCP');
+            await gateway.writeDataToModbusServer();
+            callback({ success: true, message: 'Reload thành công' });
+        } catch (error) {
+            callback({ success: false, message: 'Reload thất bại', error });
+        }
+    });
+
+    socket.on('START RTU SERVER', async (callback) => {
+        try {
+            await gateway.connectModbusServer('RTU');
+            await gateway.writeDataToModbusServer();
+            callback({ success: true, message: 'Start thành công' });
+        } catch (error) {
+            callback({ success: false, message: 'Start thất bại', error });
+        }
+    });
+
+    socket.on('STOP RTU SERVER', (callback) => {
+        try {
+            gateway.disconnectModbusServer('RTU');
+            callback({ success: true, message: 'Stop thành công' });
+        } catch (error) {
+            callback({ success: false, message: 'Stop thất bại', error });
+        }
+    });
+
+    socket.on('RELOAD RTU SERVER', async (callback) => {
+        try {
+            gateway.disconnectModbusServer('RTU');
+            await gateway.connectModbusServer('RTU');
+            await gateway.writeDataToModbusServer();
+            callback({ success: true, message: 'Reload thành công' });
+        } catch (error) {
+            callback({ success: false, message: 'Reload thất bại', error });
+        }
     });
 
 };
