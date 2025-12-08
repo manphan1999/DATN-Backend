@@ -1,0 +1,2 @@
+{"name":"COM1","type":"RS485","baudRate":9600,"dataBit":8,"stopBit":1,"parity":"none","serialPort":"COM10","_id":"8BFPQedPcmP0src7"}
+{"name":"COM2","type":"RS485","baudRate":9600,"dataBit":8,"stopBit":1,"parity":"none","serialPort":"COM12","_id":"MIUECCbol2TaWqhe"}

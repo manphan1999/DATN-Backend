@@ -1,0 +1,25 @@
+npm install --save-exact modbus-serial@8.0.13
+npm install --save-exact socket.io@4.7.2
+npm install --save-exact cors@2.8.5
+npm install --save-exact cron@3.0.0
+npm install node-snap7
+npm install axios
+npm i mqtt
+npm install --save-exact basic-ftp@5.0.3
+npm install --save-exact mysql2@2.3.3
+npm install --save-exact sequelize@6.13.0 sequelize-cli@6.3.0
+npm install --save-exact bcryptjs@2.4.3
+
+Link post git: https://github.com/manphan1999/DATN-Backend.git
+How to post project on github
+1. Use command: git init --> Use the first
+2. Use command: git add .
+3. Use command: git commit -m 'DATN-Backend'
+4. Use command: git remote add origin https://github.com/manphan1999/DATN-Backend.git
+5. Use command: git push -u origin master
+npm install --save-exact jsonwebtoken@8.5.1 cookie-parser@1.4.6
+
+Update
+git add .
+git commit -m "DATN-Backend"
+git push
