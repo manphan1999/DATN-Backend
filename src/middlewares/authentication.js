@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import response from '../ultils/response';
 
 const whitelist = [
     '/historical' // API không cần token

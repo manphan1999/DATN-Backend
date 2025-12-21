@@ -1,15 +1,6 @@
 import NetworkInfomation from '../ultils/networkInfo';
 import { HeaderModel } from '../configs/connectDB';
 
-const getAllNetwork = () => {
-    try {
-        const network = NetworkInfomation.networkInfo();
-        return { EM: 'Danh sách cổng LAN', EC: 0, DT: network };
-    } catch (error) {
-        return { EM: 'Lỗi Server!!!', EC: -2, DT: '' };
-    }
-}
-
 const getContentHeader = async () => {
     try {
         const contentHeader = await HeaderModel.findAsync({})
@@ -50,4 +41,59 @@ const updateContentHeader = async (rawData) => {
     } catch (error) { return { EM: "Lỗi Server!!!", EC: -2, DT: "", }; }
 };
 
-module.exports = { getAllNetwork, getContentHeader, createContentHeader, updateContentHeader }
+const getAllNetwork = async () => {
+    try {
+        const network = await NetworkInfomation.networkInfo();
+        return {
+            EM: 'Danh sách cổng LAN',
+            EC: 0,
+            DT: network
+        };
+    } catch (error) {
+        return {
+            EM: 'Lỗi Server!!!',
+            EC: -2,
+            DT: error.toString()
+        };
+    }
+};
+
+const setIpAddress = async (rawData) => {
+    try {
+        const { ipAddress, subnet, gateway, dns } = rawData;
+
+        const network = await NetworkInfomation.setManual({
+            ip: ipAddress,
+            subnet,
+            gateway,
+            dns
+        });
+
+        return {
+            EM: 'Cấu hình IP thành công',
+            EC: 0,
+            DT: network
+        };
+    } catch (error) {
+        return {
+            EM: error.message,
+            EC: -2,
+            DT: null
+        };
+    }
+};
+
+const confirmReboot = () => {
+    setTimeout(() => {
+        NetworkInfomation.rebootDevice();
+    }, 300);
+
+    return {
+        EM: 'Thiết bị đang khởi động lại',
+        EC: 0,
+        DT: null
+    };
+};
+
+
+module.exports = { getAllNetwork, setIpAddress, confirmReboot, getContentHeader, createContentHeader, updateContentHeader }

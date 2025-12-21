@@ -103,6 +103,8 @@ const initApiRoutes = (app) => {
     /* API Setting */
     router.get("/setting", authMiddleware.authentication, apiController.handleGetAllNetwork);
     router.get("/setting/get-network", apiController.handleGetAllNetwork);
+    router.put("/setting/update-network", apiController.handleUpdateNetwork);
+    router.get("/setting/reboot", apiController.handleReboot);
     router.get("/setting/get-header", apiController.handleGetContentHeader);
     router.post('/setting/create-header', apiController.handleCreateContentHeader);
     router.put("/setting/update-header", apiController.handleUpdateContentHeader);

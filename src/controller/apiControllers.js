@@ -14,7 +14,7 @@ import UserManagement from '../controller/userController.js';
 import PublishMQTT from '../controller/publishController.js';
 import RTUServer from '../controller/RTUServerController.js';
 import TCPServer from '../controller/TCPServerController.js';
-import NetworkController from '../controller/networkController.js';
+import SettingController from '../controller/settingController.js';
 import { getAllProtocol } from '../configs/protocol.js';
 import { getAllFunction } from '../configs/convertData.js';
 import { connectToMySQL, generateTableFromTags } from '../ultils/mysqlHandler.js'
@@ -1499,7 +1499,7 @@ const handleLogin = async (req, res) => {
 /* Handle Setting */
 const handleGetAllNetwork = async (req, res) => {
     try {
-        let data = await NetworkController.getAllNetwork()
+        let data = await SettingController.getAllNetwork()
         return res.status(200).json({
             EM: data.EM,    // Error message
             EC: data.EC,    // Error code
@@ -1511,7 +1511,7 @@ const handleGetAllNetwork = async (req, res) => {
 
 const handleGetContentHeader = async (req, res) => {
     try {
-        let data = await NetworkController.getContentHeader();
+        let data = await SettingController.getContentHeader();
         return res.status(200).json({ EM: data.EM, EC: 0, DT: data, });
 
     } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
@@ -1519,7 +1519,7 @@ const handleGetContentHeader = async (req, res) => {
 
 const handleCreateContentHeader = async (req, res) => {
     try {
-        let data = await NetworkController.createContentHeader(req.body);
+        let data = await SettingController.createContentHeader(req.body);
         return res.status(200).json({ EM: data.EM, EC: 0, DT: data, });
 
     } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
@@ -1527,11 +1527,28 @@ const handleCreateContentHeader = async (req, res) => {
 
 const handleUpdateContentHeader = async (req, res) => {
     try {
-        let data = await NetworkController.updateContentHeader(req.body);
+        let data = await SettingController.updateContentHeader(req.body);
         return res.status(200).json({ EM: data.EM, EC: 0, DT: data, });
 
     } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
 };
+
+const handleUpdateNetwork = async (req, res) => {
+    try {
+        let data = await SettingController.setIpAddress(req.body);
+        return res.status(200).json({ EM: data.EM, EC: 0, DT: data, });
+
+    } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
+};
+
+const handleReboot = (req, res) => {
+    try {
+        const data = SettingController.confirmReboot();
+        return res.status(200).json({ EM: data.EM, EC: 0, DT: data, });
+
+    } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
+};
+
 module.exports = {
     handleGetAllProtocol,
     handleCreateNewDevice, handleGetAllDevice, handleUpdateDevice, handleDeleteDevice,
@@ -1551,5 +1568,6 @@ module.exports = {
     handleGetAllRTUServer, handleCreateRTUServer, handleUpdateRTUServer, handleDeleteRTUServer,
     handleGetAllTCPServer, handleCreateTCPServer, handleUpdateTCPServer, handleDeleteTCPServer,
     handleGetAllUser, handleCreateUser, handleUpdateUser, handleDeleteUser, handleLogin,
-    handleGetAllNetwork, handleGetContentHeader, handleCreateContentHeader, handleUpdateContentHeader
+    handleGetAllNetwork, handleUpdateNetwork, handleReboot,
+    handleGetContentHeader, handleCreateContentHeader, handleUpdateContentHeader
 }
