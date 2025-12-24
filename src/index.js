@@ -10,7 +10,6 @@ import connect from "./socket/socketHandler.js";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import configViewEngine from "./configs/viewEngine.js";
-import authMiddleware from "./middlewares/authentication.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -31,7 +30,10 @@ configCors(app);
 
 // SOCKET
 global._io = io;
-global._io.on("connection", connect);
+global._io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
+    connect(socket);
+});
 
 // ROUTES
 initWebRoutes(app);

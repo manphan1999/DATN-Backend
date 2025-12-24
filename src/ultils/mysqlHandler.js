@@ -3,7 +3,7 @@ import { MySQLServerModel } from "../configs/connectDB";
 import moment from 'moment-timezone';
 
 const connectToMySQL = async (serverConfig) => {
-    console.log('check data connect: ', serverConfig)
+    // console.log('check data connect: ', serverConfig)
     const { host, port, username, password, dataBase } = serverConfig;
 
     const sequelize = new Sequelize(dataBase, username, password, {
@@ -15,7 +15,7 @@ const connectToMySQL = async (serverConfig) => {
 
     try {
         const result = await sequelize.authenticate();
-        console.log('check result: ', result)
+        // console.log('check result: ', result)
         return {
             EM: 'Kết nối Dabase thành công',
             EC: 0,

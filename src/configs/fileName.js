@@ -1,8 +1,7 @@
 const fileName = {
-    FTP_FOLDER_PATH: '/home/manx/DATN-Backend/ftp',
-    DATABASE_FOLDER_PATH: '/home/manx/DATN-Backend/data',
-    DATABASE_FOLDER_PATH_LOCAL: '/home/manx/DATN-Backend/database',
-    // DATABASE_FOLDER_PATH_LOCAL: 'C:/Users/Manx-Home/Desktop/DATN/Backend/database',
+    FTP_FOLDER_PATH: 'C:/Users/Manx/Desktop/DATN/backend/ftp',
+    DATABASE_FOLDER_PATH: 'C:/Users/Manx/Desktop/DATN/backend/data',
+    DATABASE_FOLDER_PATH_LOCAL: 'C:/Users/Manx/Desktop/DATN/backend/database',
 }
 
 // const fileName = {

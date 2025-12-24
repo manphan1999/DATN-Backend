@@ -48,6 +48,8 @@ const getValueAlarmTime = async (rawData) => {
                                 rangeAlarm: alarmItem.rangeAlarm,
                                 content: alarmItem.content,
                                 ts: alarmGroup.ts,
+                                title: alarmItem.title,
+                                type: alarmItem.type
                             });
                         }
                     }
@@ -304,4 +306,7 @@ const deleteValueAlarmDeviceId = async (rawData) => {
     }
 };
 
-module.exports = { getAllValueAlarm, getValueAlarmTime, deleteAllValueAlarm, deleteValueAlarmDeviceId, deleteValueAlarmTagNameId }
+module.exports = {
+    getAllValueAlarm, getValueAlarmTime, deleteAllValueAlarm,
+    deleteValueAlarmDeviceId, deleteValueAlarmTagNameId
+}

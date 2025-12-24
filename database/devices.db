@@ -1,3 +1,1 @@
-{"name":"VFD","ipAddress":"127.0.0.1","port":502,"protocol":"Modbus","driverName":"Modbus TCP Client","timeOut":1000,"_id":"6FYemQznpINEM73m"}
-{"name":"MQTT","ipAddress":"serverkythuat.pingddns.net","port":1883,"protocol":"MQTT","driverName":"MQTT Client","username":"kythuat","password":"123!@#","timeOut":6000,"_id":"dccaiGRYD8twn6Qy"}
-{"name":"BH","ipAddress":"115.75.3.72","port":8502,"protocol":"Modbus","driverName":"Modbus TCP Client","timeOut":1000,"_id":"tSwdujplLDJYtYoG"}
+{"name":"Slave","serialPort":"COM10","protocol":"Modbus","driverName":"Modbus RTU Client","timeOut":1000,"_id":"Pl4DH7HTzNztb0dg"}

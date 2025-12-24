@@ -67,7 +67,7 @@ class ModbusServerRTU {
                 port: 'COM14',
                 baudRate: 9600,
                 debug: true,
-                unitID: 10,
+                unitID: 1,
             });
 
             // Thêm event handlers

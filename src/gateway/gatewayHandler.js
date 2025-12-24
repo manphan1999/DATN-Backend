@@ -198,7 +198,10 @@ class GatewayHandler {
                     }
                 }
                 this.data = result
-                // console.log('Check data tag name: ', this.data)
+                // console.log(
+                //     'Check data tag name status:',
+                //     this.data.map(item => item.status)
+                // )
                 global._io.emit('SERVER SEND HOME DATA', this.data)
             }, 1000)// Tần số quét dữ liệu
         } catch (error) { console.error('Error in readData:', error); }
@@ -306,7 +309,28 @@ class GatewayHandler {
             };
 
         } catch (error) {
-            return this.createErrorResponse(tagname);
+            return {
+                tagnameId: tagname._id,
+                channel: tagname.channel,
+                slaveId: tagname.slaveId,
+                tagname: tagname.name,
+                symbol: tagname.symbol,
+                deviceName: tagname.device.name,
+                deviceId: tagname.device?._id,
+                functionCode: tagname.functionCode,
+                dataFormat: tagname.dataFormat,
+                dataType: tagname.dataType,
+                permission: tagname.permission,
+                rawValue: 0,
+                value: 0,
+                unit: tagname.unit,
+                status: this.calibrateStatus == 1 ? 4 : 3,
+                lowSet: tagname.lowSet,
+                highSet: tagname.highSet,
+                selectFTP: tagname.selectFTP,
+                selectMySQL: tagname.selectMySQL,
+                selectSQL: tagname.selectSQL,
+            };
         }
     }
 

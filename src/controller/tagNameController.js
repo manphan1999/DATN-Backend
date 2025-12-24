@@ -108,6 +108,7 @@ const createTagName = async (rawData) => {
 const updateTagName = async (rawData) => {
     try {
         const { id } = rawData;
+        //  console.log(rawData)
         if (!id) {
             return {
                 EM: `Không tìm thấy Tag`,

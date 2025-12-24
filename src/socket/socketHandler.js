@@ -1,7 +1,4 @@
-import { get } from 'http';
 import GatewayHandler from '../gateway/gatewayHandler';
-import { dropMySQLTabledele } from '../ultils/mysqlHandler'
-import { dropSQLTable } from '../ultils/sqlHandler'
 
 let gateway;
 
@@ -12,17 +9,18 @@ let gateway;
         //await gateway.connectAllMQTT();
         await gateway.connectAll();
         await gateway.readData();
-        await gateway.writeDataToModbusServer();
         await gateway.saveHistoricalToDb();
         await gateway.saveAlarmToDb();
         await gateway.saveToFileAndSendFtp();
         await gateway.sentMySQL();
         await gateway.sentSQL();
-        //await gateway.publishDataTobroker();
+        await gateway.writeDataToModbusServer();
+        await gateway.publishDataTobroker();
     } catch (error) { }
 })();
 
 const connect = (socket) => {
+
     socket.on("disconnect", async () => {
         console.log("Client disconnected:", socket.id);
     });

@@ -103,7 +103,7 @@ class ModbusConnectionManager {
         try {
             await client.connectRTUBuffered(comConfig.serialPort, config);
             client.setTimeout(Number(device.timeOut || 5000));
-
+            // console.log(`check config: `, config, `check comConfig: ${comConfig.serialPort}`)
             const connectionInfo = {
                 client,
                 type: 'RTU',
@@ -213,7 +213,7 @@ class ModbusConnectionManager {
     }
 
     /**
-     * SETUP AUTO RECONNECT - PHIÊN BẢN ĐƠN GIẢN
+     * SETUP AUTO RECONNECT 
      */
     setupAutoReconnect(deviceId) {
         const connection = this.connections.get(deviceId);

@@ -1481,19 +1481,16 @@ const handleDeleteUser = async (req, res) => {
 
 /* Handle Login */
 const handleLogin = async (req, res) => {
-    const { username, password } = req.body;
+    try {
+        const { username, password } = req.body;
+        let data = await UserManagement.handleUserLogin({ username, password });
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data.DT
+        })
 
-    const result = await UserManagement.handleUserLogin({ username, password });
-
-    if (result.EC === 0) {
-        return res.json({
-            EM: 'Đăng nhập thành công',
-            EC: 0,
-            DT: result.DT // trả access_token
-        });
-    } else {
-        return res.status(401).json({ EM: 'Đăng nhập thất bại', EC: 1 });
-    }
+    } catch (error) { return res.status(401).json({ EM: 'Đăng nhập thất bại', EC: 1 }); }
 }
 
 /* Handle Setting */

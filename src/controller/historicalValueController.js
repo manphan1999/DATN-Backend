@@ -130,7 +130,7 @@ const deleteValueHistoricalTagNameId = async (rawData) => {
 
                         // Kiểm tra nếu object value trống sau khi xóa
                         if (Object.keys(item.value).length === 0) {
-                            // Nếu object value trống rỗng, xóa luôn cả item này
+                            // Nếu object value trống, xóa luôn cả item 
                             doc.values.splice(i, 1);
                             i--; // Giảm index vì đã xóa item hiện tại
                         }
@@ -270,4 +270,8 @@ const deleteValueHistoricalDeviceId = async (rawData) => {
     }
 };
 
-module.exports = { getAllValueHistorical, getValueHistoricalTime, deleteAllValueHistorical, deleteValueHistoricalDeviceId, deleteValueHistoricalTagNameId }
+module.exports = {
+    getAllValueHistorical, getValueHistoricalTime,
+    deleteAllValueHistorical, deleteValueHistoricalDeviceId,
+    deleteValueHistoricalTagNameId
+}
