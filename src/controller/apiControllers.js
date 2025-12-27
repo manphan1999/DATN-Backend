@@ -1193,6 +1193,17 @@ const handleGetAllPublish = async (req, res) => {
     } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
 }
 
+const handleGetAllConfigPublish = async (req, res) => {
+    try {
+        let data = await PublishMQTT.getAllConfigPublish()
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+    } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
+}
+
 const handleCreatePublish = async (req, res) => {
     try {
         // console.log('Check body tag Historical:', req.body)
@@ -1205,6 +1216,26 @@ const handleCreatePublish = async (req, res) => {
         }
 
         let data = await PublishMQTT.createPublish(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
+}
+
+const handleCreateConfigPublish = async (req, res) => {
+    try {
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Không có dữ liệu`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await PublishMQTT.createConfigPublish(req.body)
         return res.status(200).json({
             EM: data.EM,    // Error message
             EC: data.EC,    // Error code
@@ -1234,6 +1265,26 @@ const handleUpdatePublish = async (req, res) => {
     } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
 }
 
+const handleUpdateConfigPublish = async (req, res) => {
+    try {
+        // console.log('Check body:', req.body)
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Không có dữ liệu`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await PublishMQTT.updateConfigPublish(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+    } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
+}
+
 const handleDeletePublish = async (req, res) => {
     try {
         if (!req.body) {
@@ -1245,6 +1296,26 @@ const handleDeletePublish = async (req, res) => {
         }
 
         let data = await PublishMQTT.deletePublish(req.body)
+        return res.status(200).json({
+            EM: data.EM,    // Error message
+            EC: data.EC,    // Error code
+            DT: data
+        })
+
+    } catch (error) { return res.status(500).json({ EM: 'Lỗi Server!!!', EC: -2, DT: '', }); }
+}
+
+const handleDeleteConfigPublish = async (req, res) => {
+    try {
+        if (!req.body) {
+            return res.status(200).json({
+                EM: `Không có dữ liệu`,    // Error message
+                EC: 1,    // Error code
+                DT: ''
+            })
+        }
+
+        let data = await PublishMQTT.deleteConfigPublish(req.body)
         return res.status(200).json({
             EM: data.EM,    // Error message
             EC: data.EC,    // Error code
@@ -1562,6 +1633,7 @@ module.exports = {
     handleConnectSQLServer, handleCreateTableSQL,
     handleGetAllSQLServer, handleCreateSQLServer, handleUpdateSQLServer, handleDeleteSQLServer,
     handleGetAllPublish, handleCreatePublish, handleUpdatePublish, handleDeletePublish,
+    handleGetAllConfigPublish, handleCreateConfigPublish, handleUpdateConfigPublish, handleDeleteConfigPublish,
     handleGetAllRTUServer, handleCreateRTUServer, handleUpdateRTUServer, handleDeleteRTUServer,
     handleGetAllTCPServer, handleCreateTCPServer, handleUpdateTCPServer, handleDeleteTCPServer,
     handleGetAllUser, handleCreateUser, handleUpdateUser, handleDeleteUser, handleLogin,

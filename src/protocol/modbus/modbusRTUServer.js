@@ -64,7 +64,7 @@ class ModbusServerRTU {
 
         try {
             this.serverRTU = new ModbusRTU.ServerSerial(vector, {
-                port: 'COM14',
+                port: '/dev/ttyS8',
                 baudRate: 9600,
                 debug: true,
                 unitID: 1,

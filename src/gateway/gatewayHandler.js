@@ -3,7 +3,8 @@ import { CronJob } from 'cron';
 import fileName from '../configs/fileName'
 import {
     TagnameModel, HistoricalValueModel, AlarmValueModel, FTPServerModel,
-    MySQLServerModel, SQLServerModel, RTUServerModel, TCPServerModel, PublishModel
+    MySQLServerModel, SQLServerModel, RTUServerModel, TCPServerModel, PublishModel,
+    PublishConfigModel
 } from '../configs/connectDB';
 import TagHistorical from '../controller/tagHistoricalController';
 import TagAlarm from '../controller/tagAlarmController'
@@ -15,7 +16,6 @@ import configHistorical from '../controller/configHistoricalController'
 import ModbusConnectionManager from '../protocol/modbus/modbusClient';
 import ModbusServerRTU from '../protocol/modbus/modbusRTUServer';
 import ModbusServerTCP from '../protocol/modbus/modbusTCPServer';
-import MQTTManager from '../protocol/mqtt/mqtt_old';
 import testPublish from '../protocol/mqtt/mqtt';
 import AppNotifyAlarm from '../controller/configAppNotifyController'
 import { writeFileTxt, writeFileCsv, deleteFileFtp, sendFtp } from '../ultils/ftpHandler'
@@ -24,8 +24,8 @@ import { insertTagValuesSQL } from '../ultils/sqlHandler'
 
 class GatewayHandler {
     constructor() {
+
         this.modbusManager = new ModbusConnectionManager();
-        this.mqttManager = new MQTTManager();
         this.devices = {};
         this.data = [];
         this.reconnectInterval = {};
@@ -45,7 +45,6 @@ class GatewayHandler {
         this.saveDataTimer = null;
         this.saveDataJob = null;
         this.currentHistoricalTagsHash = null;
-        // this.modbusServer = {}
         this.mqttConfig = {
             enabled: false,
             publishTopics: {},
@@ -54,7 +53,7 @@ class GatewayHandler {
     }
 
     async connectAllMQTT() {
-        await this.mqttManager.connectAllMQTTClients();
+        mqttClient.connect();
     }
 
     async connectAll() {
@@ -446,55 +445,55 @@ class GatewayHandler {
     */
     async publishDataTobroker() {
         try {
-            // Xử lý cho publish
-            if (this.mqttServer) {
-                if (this.intervalMqttServer) {
-                    clearInterval(this.intervalMqttServer);
-                    this.intervalMqttServer = null;
-                }
+            if (!this.mqttServer) return;
 
-                this.intervalMqttServer = setInterval(async () => {
-                    try {
-                        const modbusMqttPublish = await PublishModel.findAsync();
-                        for (let tagPublishServer of modbusMqttPublish) {
-                            const tagData = await this.getDataByTagnameId(tagPublishServer.tagnameId);
-                            if (!tagData) { continue; }
-
-                            const rawValue = String(tagData.value)
-                            console.log('check rawValue: ', rawValue)
-                            testPublish(tagPublishServer.topic, rawValue)
-                            // await this.mqttManager.publishToAll(tagPublishServer.topic,
-                            //     payload,
-                            //     tagPublishServer.controlQoS,
-                            //     tagPublishServer.controlRetain);
-
-                        }
-                    } catch (error) {
-                        console.error('Error in MQTT Server interval:', error);
-                    }
-                }, 100);
+            if (this.intervalMqttServer) {
+                clearInterval(this.intervalMqttServer);
+                this.intervalMqttServer = null;
             }
+
+            this.intervalMqttServer = setInterval(async () => {
+                try {
+                    const tagPublish = await PublishModel.findAsync();
+                    const brokersMqtt = await PublishConfigModel.findAsync();
+
+                    for (const brokerMqtt of brokersMqtt) {
+
+                        const topic = brokerMqtt.topic;
+
+                        const dataloggerPayload = {};
+
+                        for (const tag of tagPublish) {
+                            const tagData = await this.getDataByTagnameId(tag.id);
+                            if (!tagData) continue;
+
+                            dataloggerPayload[tag.symbol] = tagData.value;
+                        }
+
+                        if (Object.keys(dataloggerPayload).length === 0) continue;
+
+                        const message = JSON.stringify({
+                            datalogger: dataloggerPayload
+                        });
+
+                        console.log(
+                            `[MQTT] ${brokerMqtt.ipAddress}:${brokerMqtt.port} -> ${topic}`,
+                            message
+                        );
+
+                        testPublish(brokerMqtt, topic, message);
+                    }
+
+                } catch (error) {
+                    console.error('Error in MQTT Server interval:', error);
+                }
+            }, 1000);
+
         } catch (error) {
             console.error('Error in writeDataTobroker:', error);
         }
     }
 
-    async disconnectMqttServer(type) {
-        try {
-            if (this.mqttServer[type]) {
-                this.mqttServer[type].disconnectMqttServer();
-                delete this.mqttServer[type];
-            }
-            // Clear interval riêng cho từng loại server
-            if (this.intervalMqttServer[type]) {
-                clearInterval(this.intervalMqttServer[type]);
-                delete this.intervalMqttServer[type];
-            }
-            console.log(` MQTT ${type} Server disconnected`);
-        } catch (error) {
-            console.error(`Error disconnecting MQTT ${type} Server:`, error);
-        }
-    }
 
     /**
      * MODBUS SERVER
@@ -875,7 +874,7 @@ class GatewayHandler {
     /**
     * LƯU TRỮ DATA ALARM
     */
-    async saveAlarmToDb(intervalSec = 5000) {
+    async saveAlarmToDb(intervalSec = 1000) {
 
         if (!this.alarmPreviousState) this.alarmPreviousState = new Map(); // lưu trạng thái alarm trước đó
 
@@ -934,6 +933,15 @@ class GatewayHandler {
                         alarmToSave.push(alarmInfo);
                         const contentSendApp = `${alarmInfo.content} ${alarmInfo.value} ${alarmInfo.unit}`;
 
+                        const notifyBell = {
+                            id: Date.now(),
+                            type: alarmInfo.type,
+                            message: `Lỗi thẻ ${alarmInfo.tagName} với nội dung là: ${alarmInfo.content}`,
+                            time: new Date().toISOString()
+                        }
+
+                        global._io.emit('notify', notifyBell);
+
                         if (alarmInfo.selection?.Line === true) {
                             await this.sendAlarmToLine(alarmInfo.title, contentSendApp, alarmInfo.type);
                         }
@@ -978,6 +986,34 @@ class GatewayHandler {
             console.log(`[Alarm AutoSave] Đã dừng lưu cảnh báo tự động lúc ${new Date().toLocaleTimeString()}`);
         } else {
             console.log(`[Alarm AutoSave] Không có tiến trình nào đang chạy để dừng.`);
+        }
+    }
+
+    clearDb() {
+        try {
+            const job = new CronJob(
+                '30 0 0 * * *',
+                async function () {
+                    const date = new Date()
+                    const dateOf60DaysAgo = date.setMonth(date.getMonth - 2)
+                    HistoricalValueModel.removeAsync(
+                        { date: { $lte: dateOf60DaysAgo } },
+                        { multi: true }
+                    )
+                    AlarmValueModel.removeAsync(
+                        { date: { $lte: dateOf60DaysAgo } },
+                        { multi: true }
+                    )
+                    await HistoricalValueModel.loadDatabaseAsync()
+                    await AlarmValueModel.loadDatabaseAsync()
+                },
+                null,
+                true,
+                'Asia/Ho_Chi_Minh'
+            )
+            job.start()
+        } catch (error) {
+            // console.log(`gateway > gatewayHandler > clearDb [error]: ${error}`)
         }
     }
 

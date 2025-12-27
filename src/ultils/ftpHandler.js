@@ -6,7 +6,7 @@ import filePath from "../configs/fileName.js";
 const writeFileTxt = async (serverFtp, dateTime, datas) => {
     try {
         const { _id, fileName, fileType } = serverFtp;
-
+        console.log(`writeFileTxt`);
         // YYYYMMDDHHmmss
         const d = new Date(dateTime);
         const fileDateTime = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(
@@ -42,6 +42,7 @@ const writeFileTxt = async (serverFtp, dateTime, datas) => {
 
 const writeFileCsv = async (serverFtp, dateTime, datas, tagnames) => {
     try {
+        console.log(`writeFileCsv`);
         const { _id, fileName, fileType } = serverFtp;
 
         const d = new Date(dateTime);

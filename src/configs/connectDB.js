@@ -172,7 +172,17 @@ const PublishModel = new Datastore({
 })
     ; (async () => {
         try {
-            await UserModel.loadDatabaseAsync()
+            await PublishModel.loadDatabaseAsync()
+        } catch (error) { }
+    })()
+//////////////////////////////////////////////////////////////////////////////
+const PublishConfigModel = new Datastore({
+    filename: `${fileName.DATABASE_FOLDER_PATH_LOCAL}/publishConfig.db`,
+    autoload: true
+})
+    ; (async () => {
+        try {
+            await PublishConfigModel.loadDatabaseAsync()
         } catch (error) { }
     })()
 //////////////////////////////////////////////////////////////////////////////
@@ -182,7 +192,7 @@ const RTUServerModel = new Datastore({
 })
     ; (async () => {
         try {
-            await UserModel.loadDatabaseAsync()
+            await RTUServerModel.loadDatabaseAsync()
         } catch (error) { }
     })()
 //////////////////////////////////////////////////////////////////////////////
@@ -192,7 +202,7 @@ const TCPServerModel = new Datastore({
 })
     ; (async () => {
         try {
-            await UserModel.loadDatabaseAsync()
+            await TCPServerModel.loadDatabaseAsync()
         } catch (error) { }
     })()
 //////////////////////////////////////////////////////////////////////////////
@@ -202,13 +212,13 @@ const HeaderModel = new Datastore({
 })
     ; (async () => {
         try {
-            await UserModel.loadDatabaseAsync()
+            await HeaderModel.loadDatabaseAsync()
         } catch (error) { }
     })()
 export {
     DeviceModel, ComModel, TagnameModel, TagHistorical, ConfigHistorical,
     HistoricalValueModel, TagAlarmModel, AppNotifyModel, AlarmValueModel,
     FTPServerModel, MySQLServerModel, SQLServerModel, UserModel,
-    PublishModel, RTUServerModel, TCPServerModel, HeaderModel
+    PublishModel, PublishConfigModel, RTUServerModel, TCPServerModel, HeaderModel
 }
 

@@ -1,27 +1,46 @@
 import mqtt from "mqtt";
 
-const testPublish = (topic, value) => {
+const testPublish = (brokerConfig, topic, message) => {
+
+    const {
+        ipAddress,
+        port,
+        username,
+        password,
+        controlQoS,
+        controlRetain
+    } = brokerConfig;
+
     const options = {
-        clientId: 'Datatlogger',
-        username: 'kythuat',
-        password: '123!@#',
+        clientId: `Datalogger_${Date.now()}`,
+        username,
+        password,
+        clean: true,
+        reconnectPeriod: 0
     };
 
-    let client = mqtt.connect("mqtt://serverkythuat.pingddns.net:1883", options);
+    const url = `mqtt://${ipAddress}:${port}`;
+
+    const client = mqtt.connect(url, options);
 
     client.on("connect", () => {
-        client.subscribe("presence", (err) => {
-            if (!err) {
-                client.publish(topic, value);
+        client.publish(
+            topic,
+            message,
+            {
+                qos: Number(controlQoS),
+                retain: controlRetain === true || controlRetain === "true"
+            },
+            () => {
+                client.end();
             }
-        });
+        );
     });
 
-    client.on("message", (topic, message) => {
-        // message is Buffer
-        console.log(message.toString());
+    client.on("error", (err) => {
+        console.error("MQTT publish error:", err.message);
         client.end();
     });
-}
+};
 
 export default testPublish;

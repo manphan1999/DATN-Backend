@@ -6,7 +6,7 @@ let gateway;
 (async () => {
     try {
         gateway = new GatewayHandler();
-        //await gateway.connectAllMQTT();
+        // await gateway.connectAllMQTT();
         await gateway.connectAll();
         await gateway.readData();
         await gateway.saveHistoricalToDb();
@@ -16,6 +16,7 @@ let gateway;
         await gateway.sentSQL();
         await gateway.writeDataToModbusServer();
         await gateway.publishDataTobroker();
+        gateway.clearDb();
     } catch (error) { }
 })();
 
@@ -23,6 +24,10 @@ const connect = (socket) => {
 
     socket.on("disconnect", async () => {
         console.log("Client disconnected:", socket.id);
+    });
+
+    socket.on("UPDATE HEADER", () => {
+        global._io.emit('UPDATE HEADER');
     });
 
     socket.on("CLIENT WRITE TAG", async (data) => {

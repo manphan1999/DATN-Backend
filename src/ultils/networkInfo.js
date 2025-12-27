@@ -144,11 +144,11 @@ const setManual = async ({ ip, subnet, gateway, dns }) => {
     };
 };
 
-
 const rebootDevice = () => {
-    spawn('/usr/bin/systemctl', ['reboot'], {
+    spawn('sudo', ['/usr/bin/systemctl', 'reboot'], {
         detached: true,
         stdio: 'ignore'
     }).unref();
 };
+
 module.exports = { networkInfo, setManual, rebootDevice }

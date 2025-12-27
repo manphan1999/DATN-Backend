@@ -79,6 +79,10 @@ const initApiRoutes = (app) => {
     router.post('/publish/create-mqtt', apiController.handleCreatePublish);
     router.put("/publish/update-mqtt", apiController.handleUpdatePublish);
     router.delete("/publish/delete-mqtt", apiController.handleDeletePublish);
+    router.get("/publish/get-config", apiController.handleGetAllConfigPublish);
+    router.post('/publish/create-config', apiController.handleCreateConfigPublish);
+    router.put("/publish/update-config", apiController.handleUpdateConfigPublish);
+    router.delete("/publish/delete-config", apiController.handleDeleteConfigPublish);
 
     /* API RTU Server */
     router.get("/server/get-rtu", apiController.handleGetAllRTUServer);
