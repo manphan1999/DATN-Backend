@@ -138,7 +138,7 @@ const updateDevice = async (rawData) => {
 
 const deleteDevice = async (rawData) => {
     try {
-        console.log('check Device Delete: ', rawData)
+        //  console.log('check Device Delete: ', rawData)
         const { ids } = rawData
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return {

@@ -1,2 +1,0 @@
-{"deviceId":"v8OeUfMlyN4a2WMF","deviceName":"11111","topic":"1223","controlQoS":"0","controlRetain":"false","ipAddress":"serverpublic.pingddns.net","port":1883,"protocol":"MQTT","driverName":"MQTT Client","username":"kythuat","password":"123!@#","_id":"UA4kHyIcQx2y8zGR"}
-{"deviceId":"7h4E0ZY0PW42aKlP","deviceName":"MQTT","topic":"1456","controlQoS":"0","controlRetain":"false","ipAddress":"serverkythuat.pingddns.net","port":1883,"protocol":"MQTT","driverName":"MQTT Client","username":"kythuat","password":"123!@#","_id":"rFwRcmbRavNvFMW0"}

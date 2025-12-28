@@ -16,7 +16,7 @@ import configHistorical from '../controller/configHistoricalController'
 import ModbusConnectionManager from '../protocol/modbus/modbusClient';
 import ModbusServerRTU from '../protocol/modbus/modbusRTUServer';
 import ModbusServerTCP from '../protocol/modbus/modbusTCPServer';
-import testPublish from '../protocol/mqtt/mqtt';
+import { publishMQTT } from '../protocol/mqtt/mqtt';
 import AppNotifyAlarm from '../controller/configAppNotifyController'
 import { writeFileTxt, writeFileCsv, deleteFileFtp, sendFtp } from '../ultils/ftpHandler'
 import { insertTagValues } from '../ultils/mysqlHandler';
@@ -24,7 +24,7 @@ import { insertTagValuesSQL } from '../ultils/sqlHandler'
 
 class GatewayHandler {
     constructor() {
-
+        this.lastPublishedData = new Map();
         this.modbusManager = new ModbusConnectionManager();
         this.devices = {};
         this.data = [];
@@ -457,31 +457,37 @@ class GatewayHandler {
                     const tagPublish = await PublishModel.findAsync();
                     const brokersMqtt = await PublishConfigModel.findAsync();
 
-                    for (const brokerMqtt of brokersMqtt) {
+                    for (const broker of brokersMqtt) {
 
-                        const topic = brokerMqtt.topic;
-
-                        const dataloggerPayload = {};
+                        const payload = {};
 
                         for (const tag of tagPublish) {
                             const tagData = await this.getDataByTagnameId(tag.id);
                             if (!tagData) continue;
 
-                            dataloggerPayload[tag.symbol] = tagData.value;
+                            payload[tag.symbol] = tagData.value;
                         }
 
-                        if (Object.keys(dataloggerPayload).length === 0) continue;
+                        if (Object.keys(payload).length === 0) continue;
 
-                        const message = JSON.stringify({
-                            datalogger: dataloggerPayload
-                        });
+                        const messageObj = { datalogger: payload };
+                        const messageStr = JSON.stringify(messageObj);
+
+                        const lastMessage = this.lastPublishedData.get(broker._id);
+
+                        // Gửi khi Data thay đổi
+                        if (lastMessage === messageStr) {
+                            continue;
+                        }
+
+                        this.lastPublishedData.set(broker._id, messageStr);
 
                         console.log(
-                            `[MQTT] ${brokerMqtt.ipAddress}:${brokerMqtt.port} -> ${topic}`,
-                            message
+                            `[MQTT PUBLISH] ${broker.ipAddress}:${broker.port} -> ${broker.topic}`,
+                            messageStr
                         );
 
-                        testPublish(brokerMqtt, topic, message);
+                        publishMQTT(broker, broker.topic, messageStr);
                     }
 
                 } catch (error) {
@@ -493,8 +499,6 @@ class GatewayHandler {
             console.error('Error in writeDataTobroker:', error);
         }
     }
-
-
     /**
      * MODBUS SERVER
      */
@@ -1262,7 +1266,6 @@ class GatewayHandler {
     async sentMySQL() {
         try {
             const listServer = await MySQLServerModel.findAsync();
-
             if (!Array.isArray(listServer) || listServer.length === 0) {
                 //  console.log("Không có server MySQL nào được cấu hình. Bỏ qua việc gửi dữ liệu.");
                 return;
@@ -1289,6 +1292,7 @@ class GatewayHandler {
                             const tagsToSend = datas.filter(d => d.selectMySQL === true);
                             //console.log('check tagsToSend.length: ', tagsToSend.length)
                             if (tagsToSend.length === 0) return;
+                            //   console.log("tagsToSend: ", tagsToSend);
 
                             // Gửi lên server
                             await insertTagValues(mysqlServer, tagsToSend);

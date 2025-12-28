@@ -87,20 +87,24 @@ const connect = (socket) => {
     });
 
     socket.on("CREATE TABLE MYSQL", async () => {
+        console.log('CREATE TABLE MYSQL')
         await gateway.sentMySQL();
     });
 
     socket.on("CREATE TABLE SQL", async () => {
+        console.log('CREATE TABLE SQL')
         await gateway.sentSQL();
     });
 
     socket.on("DELETE MYSQL SERVER", async (data) => {
+        console.log('DELETE MYSQL SERVER')
         const serverIds = data.map(d => d.id);
         await gateway.deleteMySQLConfigs(serverIds);
         // await gateway.dropMySQLTabledele(serverIds);
     });
 
     socket.on("DELETE SQL SERVER", async (data) => {
+        console.log('DELETE SQL SERVER')
         const serverIds = data.map(d => d.id);
         await gateway.deleteSQLConfigs(serverIds);
         //  await gateway.dropSQLTable(serverIds);
@@ -198,6 +202,10 @@ const connect = (socket) => {
         }
     });
 
+    socket.on('CHANGE PUBLISH', async (callback) => {
+        console.log('CHANGE PUBLISH')
+        await gateway.publishDataTobroker();
+    });
 };
 
 export default connect;

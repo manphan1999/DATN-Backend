@@ -195,7 +195,7 @@ const deleteValueAlarmTagNameId = async (rawData) => {
 
 const deleteValueAlarmDeviceId = async (rawData) => {
     try {
-        console.log('Check rawData Delete Device Alarm:', rawData);
+        // console.log('Check rawData Delete Device Alarm:', rawData);
         const { ids } = rawData;
 
         if (!ids || !Array.isArray(ids) || ids.length === 0) {

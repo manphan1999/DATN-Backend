@@ -223,8 +223,10 @@ const insertTagValues = async (serverConfig, tags) => {
 
     try {
         await sequelize.query(sql);
+        console.log("Gửi dữ liệu thành công");
         return { success: true, message: "Gửi dữ liệu thành công" };
     } catch (error) {
+        console.log("Gửi dữ liệu không thành công: ", error);
         return { success: false, message: error.message };
     }
 };

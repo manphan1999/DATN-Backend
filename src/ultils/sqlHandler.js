@@ -21,6 +21,7 @@ const connectToSQLServer = async (serverConfig) => {
             DT: pool
         };
     } catch (e) {
+        console.log('check error: ', e)
         return {
             EM: "Kết nối SQL Server thất bại",
             EC: -2,

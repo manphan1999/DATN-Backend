@@ -1,2 +1,0 @@
-{"id":"tDwqOMJTOxi391Lo","name":"pH","type":"","channel":1,"symbol":"pH","device":{"_id":"AsxrguUr5T7XLPFN","name":"0"},"dataFormat":5,"selectMySQL":false,"selectSQL":false,"_id":"aGVVoe7CiTbKEI2q"}
-{"id":"xhZkVZPv4WsGJg9u","name":"Nhiệt độ","type":"","channel":0,"symbol":"Temp","unit":"oC","device":{"_id":"AsxrguUr5T7XLPFN","name":"0"},"dataFormat":5,"selectMySQL":false,"selectSQL":false,"_id":"vM5PRatBeGzmhY3D"}
